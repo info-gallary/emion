@@ -32,31 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-send').addEventListener('click', sendBundle);
     document.getElementById('btn-connect-mod').addEventListener('click', connectModule);
 
-    // Tab Switching
-    document.getElementById('tab-viz').addEventListener('click', () => switchTab('viz'));
-    document.getElementById('tab-config').addEventListener('click', () => switchTab('config'));
-
     initCharts();
     connectWS();
     refresh();
     setInterval(refresh, 5000);
     requestAnimationFrame(draw);
 });
-
-function switchTab(tab) {
-    // Buttons
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
-    
-    // Content Views
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById(`view-${tab}`).classList.add('active');
-    
-    // Special handling: Resize canvas if switching back to Viz
-    if (tab === 'viz') {
-        setTimeout(resize, 50);
-    }
-}
 
 // ── WebSocket & Events ───────────────────
 

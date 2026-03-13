@@ -77,12 +77,40 @@ See `anomaly_detector.py` for a functional sample implementation.
 
 ---
 
+## 🐳 5. Docker (Self-Contained BPv7)
+
+Run the entire EmION environment (ION-DTN + pyion + Dashboard) without local installation.
+
+### Build and Run
+```bash
+docker build -t emion .
+docker run -p 8420:8420 emion
+```
+Access Mission Control at `http://localhost:8420`.
+
+---
+
+## 📦 6. Publishing to PyPI
+
+### Build the Package
+```bash
+pip install build twine
+python3 -m build
+```
+
+### Upload to PyPI
+```bash
+twine upload dist/*
+```
+
+---
+
 ## 🏗️ Project Structure
-- `emion/` — Core authentic ION orchestration.
-- `tests/` — Unified verification suite.
-- `install.sh` — One-click setup.
-- `anomaly_detector.py` — Sample security module.
-- `pyproject.toml` — Production packaging.
+- `emion/` — Core BPv7 orchestration.
+- `ION-DTN/` — Authentic NASA-JPL C-Engine.
+- `pyion/` — Python C-bindings for ION.
+- `Dockerfile` — Professional self-contained environment.
+- `README.md` — This guide.
 
 ---
 

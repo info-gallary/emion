@@ -1,33 +1,44 @@
-FROM alpine:3.14
+FROM ubuntu:22.04
 
-# Install dependencies
-RUN apk add --no-cache \
-    build-base \
-    openssl-dev \
+# Avoid interactive prompts during build
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install core build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
     git \
     python3 \
     python3-dev \
-    py3-pip \
-    linux-headers \
-    wget
+    python3-pip \
+    wget \
+    cmake \
+    libexpat1-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Clone and install ION-DTN
+# Set up build directories
 WORKDIR /usr/src
-RUN git clone --branch ion-open-source-4.1.2 https://github.com/nasa-jpl/ION-DTN.git ion-dtn
-WORKDIR /usr/src/ion-dtn
-RUN ./configure --enable-bpv7 && make && make install
 
-# Clone and install pyion
+# 1. Build & Install ION-DTN (from local source)
+COPY ION-DTN ./ION-DTN
+WORKDIR /usr/src/ION-DTN
+RUN ./configure --enable-bpv7 && make -j$(nproc) && make install && ldconfig
+
+# 2. Build & Install pyion (from local source)
 WORKDIR /usr/src
-RUN git clone --branch v4.1.2 https://github.com/nasa-jpl/pyion.git pyion
+COPY pyion ./pyion
 WORKDIR /usr/src/pyion
-
-# Set environment variables for pyion installation
-ENV ION_HOME=/usr/src/ion-dtn
-ENV PYION_BP_VERSION=BPv7
-
-# Install pyion
 RUN pip3 install .
 
-# Setup workspace
-WORKDIR /workspace
+# 3. Install EmION (from local source)
+WORKDIR /usr/src/emion
+COPY . .
+RUN pip3 install -e ".[dashboard]"
+
+# Environment setup
+ENV PATH="/usr/local/bin:${PATH}"
+EXPOSE 8420
+
+# Default command: Start Mission Control
+ENTRYPOINT ["emion"]
+CMD ["dashboard", "--port", "8420"]
