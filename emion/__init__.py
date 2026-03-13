@@ -3,7 +3,7 @@ EmION — Authentic ION-DTN Framework.
 All operations use real ION C-engine + pyion. No dummies.
 """
 
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 __author__ = "EmION Team"
 
 try:

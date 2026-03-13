@@ -93,7 +93,7 @@ def _setup():
 
         try:
             print(f"      (Using {' '.join(installer)})")
-            subprocess.run(installer + ["install", "git+https://github.com/nasa-jpl/pyion.git"], check=True)
+            subprocess.run(installer + ["install", "git+https://github.com/nasa-jpl/pyion.git@v4.1.2"], check=True)
             print("  ✅ pyion installed successfully.")
         except Exception as e:
             print(f"  ❌ Failed to install pyion: {e}")
