@@ -11,7 +11,7 @@ from emion.core.engine import EmionEngine
 
 _nodes: Dict[int, EmionNode] = {}
 _engines: Dict[int, EmionEngine] = {}
-_plugins: Dict[str, APIPlugin] = {}
+_plugins: Dict[str, "APIPlugin"] = {}
 
 
 def register_node(node_id: int):
