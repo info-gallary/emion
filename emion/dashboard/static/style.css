@@ -30,6 +30,28 @@ html, body {
     background: var(--bg-main);
 }
 
+/* ── Custom Scrollbars (WebKit/Firefox Compatibility) ── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Firefox Specific Scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
 .dashboard-grid {
     display: flex;
     width: 100%; height: 100%;
