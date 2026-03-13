@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmION — ION-DTN Mission Control</title>
+    <meta name="description" content="EmION: Premium ION-DTN visual simulation and telemetry dashboard">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>⚛ Em<span class="accent">ION</span></h1>
+            <span class="subtitle">Mission Control Dashboard</span>
+        </div>
+        <div class="header-right">
+            <span class="status-badge" id="ws-status">Connecting...</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Top Controls -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <section class="card">
+                <h2>🛰 Network Orchestration</h2>
+                <div class="control-row">
+                    <input type="number" id="input-node-id" placeholder="Node ID" min="1" max="99">
+                    <button id="btn-add-node" class="btn-primary">+ Register Node</button>
+                    <span class="divider"></span>
+                    <button id="btn-start" class="btn-accent">▶ Initialize ION Core</button>
+                    <button id="btn-stop" class="btn-danger">■ Shutdown</button>
+                </div>
+                <div id="node-chips" class="chip-row"></div>
+            </section>
+
+            <section class="card">
+                <h2>📡 Telemetry & Command</h2>
+                <div class="control-row">
+                    <input type="number" id="input-src" placeholder="Source">
+                    <input type="number" id="input-dst" placeholder="Dest">
+                    <input type="text" id="input-payload" placeholder="Command" value="MISSION_CMD_01">
+                    <button id="btn-send" class="btn-accent">🚀 Dispatch</button>
+                    <span class="divider"></span>
+                    <input type="number" id="input-recv-node" placeholder="Monitor">
+                    <button id="btn-recv" class="btn-secondary">📥 Listen</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Network Canvas -->
+        <section class="card full-width" style="padding: 0; overflow: hidden;">
+            <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <h2>🌐 Real-Time Topology Visualization</h2>
+                <div class="hint">Canvas Engine: Authentic ION Inducts/Outducts</div>
+            </div>
+            <div id="viz-container">
+                <canvas id="topology-canvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Monitoring Analytics -->
+        <section id="bottom-panels">
+            <div class="card">
+                <h2>📊 Live Metrics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item"><div class="stat-value" id="s-nodes">0</div><div class="stat-label">Nodes</div></div>
+                    <div class="stat-item"><div class="stat-value" id="s-links">0</div><div class="stat-label">Topology</div></div>
+                    <div class="stat-item"><div class="stat-value" id="s-sent">0</div><div class="stat-label">Egress</div></div>
+                    <div class="stat-item"><div class="stat-value" id="s-recv">0</div><div class="stat-label">Ingress</div></div>
+                </div>
+                <div id="telemetry-panels" class="telemetry-grid">
+                    <!-- Live node telemetry injected here -->
+                </div>
+            </div>
+
+            <div class="card event-card">
+                <h2>📋 Mission Log</h2>
+                <div id="event-log" class="event-log"></div>
+            </div>
+
+            <div class="card module-card">
+                <h2>🧠 Security & Monitoring Modules</h2>
+                <p class="hint">Plug-in custom anomaly detection APIs</p>
+                <div class="control-row" style="margin-top: 8px;">
+                    <input type="text" id="input-mod-url" placeholder="http://local:8421" style="width: 160px;">
+                    <input type="text" id="input-mod-targets" placeholder="Nodes (e.g. 1,2) or 'all'" style="width: 140px;">
+                    <button id="btn-connect-mod" class="btn-ml">🔌 Attach</button>
+                </div>
+                <div id="module-list" class="plugin-list"></div>
+                <div id="module-results" class="anomaly-results" style="margin-top: 12px;"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>EmION v0.1.0 — Verified Authentic ION-DTN Integration · DRDO Labs</p>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

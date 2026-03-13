@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emion"
+version = "0.1.0"
+authors = [
+  { name="EmION Team", email="contact@emion.dtn" },
+]
+description = "Professional ION-DTN Mission Control & Simulation Framework"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dashboard = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "websockets>=11.0",
+]
+
+[project.scripts]
+emion = "emion.cli:main"
+
+[tool.setuptools]
+packages = ["emion", "emion.core", "emion.dashboard", "emion.plugins"]
+
+[tool.setuptools.package-data]
+emion = ["dashboard/static/*"]
