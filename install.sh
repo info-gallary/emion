@@ -1,5 +1,7 @@
 #!/bin/bash
 # ⚛️ EmION Unified Setup & Installation Script
+# This script handles EmION installation and automatically bootstraps
+# ION-DTN and pyion if they are missing from the system.
 
 set -e
 
@@ -7,17 +9,47 @@ echo "============================================================"
 echo "  ⚛️ EmION — Authentic ION-DTN Setup"
 echo "============================================================"
 
-# 1. Dependency Check
-echo "[SETUP] Checking dependencies..."
-for cmd in ionadmin bpadmin ipnadmin python3 pip; do
-    if ! command -v $cmd &> /dev/null; then
-        echo "❌ Error: $cmd not found. Please install ION-DTN and Python 3."
+# 1. Dependency Check & Bootstrap
+echo "[SETUP] Checking system dependencies..."
+
+# --- ION-DTN Bootstrap ---
+if ! command -v ionadmin &> /dev/null; then
+    echo "⚠️ ION-DTN not found. Entering Bootstrap Mode..."
+    if [ -d "ION-DTN" ]; then
+        echo "[BOOTSTRAP] Building ION-DTN from Project Source..."
+        cd ION-DTN
+        ./configure
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd ..
+        echo "✅ ION-DTN installed successfully."
+    else
+        echo "❌ Error: ION-DTN source directory not found. Cannot bootstrap."
         exit 1
     fi
-done
-echo "✅ Dependencies present."
+else
+    echo "✅ ION-DTN already present."
+fi
 
-# 2. Package Installation
+# --- pyion Bootstrap ---
+if ! python3 -c "import pyion" &> /dev/null; then
+    echo "⚠️ pyion not found. Entering Bootstrap Mode..."
+    if [ -d "pyion" ]; then
+        echo "[BOOTSTRAP] Building pyion from Project Source..."
+        cd pyion
+        pip install .
+        cd ..
+        echo "✅ pyion installed successfully."
+    else
+        echo "❌ Error: pyion source directory not found. Cannot bootstrap."
+        exit 1
+    fi
+else
+    echo "✅ pyion already present."
+fi
+
+# 2. EmION Package Installation
 echo "[SETUP] Installing EmION package and dashboard extras..."
 pip install -e ".[dashboard]"
 
