@@ -77,6 +77,8 @@ function onEvent(evt) {
     } else if (evt.type === 'network_stopped') {
         log('err', 'ION system shutdown requested');
         refresh();
+    } else if (evt.type === 'network_error') {
+        log('err', `Node ${evt.node}: ${evt.msg}`);
     }
 }
 

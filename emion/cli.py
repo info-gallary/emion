@@ -113,7 +113,7 @@ def _info():
         print(f"  pyion (internal): ✅ available")
     except ImportError:
         pyion_found = False
-        print(f"  pyion (internal): ❌ not built (try reinstalling emion with ION_HOME set)")
+        print(f"  pyion (internal): ❌ not built (Run: pip install emion --force-reinstall)")
 
     if not ion_found:
         print("\n  ⚠️  ION-DTN missing! Run 'emion setup' to fix.")
