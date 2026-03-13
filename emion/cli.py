@@ -77,6 +77,23 @@ def _setup():
     except ImportError:
         print("  [2/2] Installing pyion bindings...")
         
+        # Prepare environment for pyion build
+        env = os.environ.copy()
+        env["PYION_BP_VERSION"] = "BPv7"
+        
+        # Determine ION_HOME (prioritize local sources)
+        local_ion = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ION-DTN")
+        if os.path.exists(local_ion):
+            env["ION_HOME"] = os.path.abspath(local_ion)
+            print(f"      (Using local ION source: {env['ION_HOME']})")
+        
+        # Determine pyion source
+        local_pyion = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyion")
+        pyion_source = "git+https://github.com/nasa-jpl/pyion.git@v4.1.2"
+        if os.path.exists(local_pyion):
+            pyion_source = os.path.abspath(local_pyion)
+            print(f"      (Using local pyion source: {pyion_source})")
+
         # Performance/Compatibility check: use uv if available, otherwise pip
         installer = None
         if shutil.which("uv"):
@@ -88,16 +105,16 @@ def _setup():
 
         if not installer:
             print("  ❌ Error: Neither 'pip' nor 'uv' found in this environment!")
-            print("     Please install pyion manually: pip install git+https://github.com/nasa-jpl/pyion.git")
+            print("     Please install pyion manually: pip install git+https://github.com/nasa-jpl/pyion.git@v4.1.2")
             return
 
         try:
             print(f"      (Using {' '.join(installer)})")
-            subprocess.run(installer + ["install", "git+https://github.com/nasa-jpl/pyion.git@v4.1.2"], check=True)
+            subprocess.run(installer + ["install", pyion_source], check=True, env=env)
             print("  ✅ pyion installed successfully.")
         except Exception as e:
             print(f"  ❌ Failed to install pyion: {e}")
-            print("     Try running: pip install git+https://github.com/nasa-jpl/pyion.git")
+            print("     Possible fix: ION_HOME=/path/to/ion PYION_BP_VERSION=BPv7 pip install .")
             return
 
     print("\n  🎉 Setup Complete! Run 'emion dashboard' to start.\n")
