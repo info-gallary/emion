@@ -3,18 +3,18 @@ EmION — Authentic ION-DTN Framework.
 All operations use real ION C-engine + pyion. No dummies.
 """
 
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 __author__ = "EmION Team"
 
 try:
     from .core.node import EmionNode
     from .core.engine import EmionEngine
+    from .plugins.base import APIPlugin
 except ImportError:
     # Allow importing root package even if dependencies are missing (for setup)
     EmionNode = None
     EmionEngine = None
-
-from .plugins.base import APIPlugin
+    APIPlugin = None
 
 ION_AVAILABLE = True
 

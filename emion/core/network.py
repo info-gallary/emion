@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Emion Network - High-level orchestration API for ION-DTN.
 Provides simple functional interface for notebooks and scripts.
