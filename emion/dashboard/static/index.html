@@ -15,9 +15,17 @@
         <!-- Sidebar: Orchestration -->
         <aside class="sidebar card">
             <div class="brand">
-                <h1>⚛ Em<span class="accent">ION</span></h1>
-                <span class="protocol">BPv7 Core</span>
+                <h1>Em<span class="accent">ION</span></h1>
+                <span class="protocol">Mission Control</span>
             </div>
+
+            <nav class="nav-section">
+                <h3>View Selection</h3>
+                <div class="tab-switcher">
+                    <button id="tab-viz" class="tab-btn active">Topology</button>
+                    <button id="tab-config" class="tab-btn">Configuration</button>
+                </div>
+            </nav>
 
             <nav class="nav-section">
                 <h3>🛰 Network</h3>
@@ -62,35 +70,66 @@
             </div>
         </aside>
 
-        <!-- Main Workspace: Topology -->
+        <!-- Main Workspace: Content Area -->
         <section class="workspace">
-            <div class="card viz-card">
-                <div class="card-header">
-                    <h2>Live Topology <small>Bundle Protocol v7 Animation</small></h2>
+            <!-- Topology View -->
+            <div id="view-viz" class="tab-content active">
+                <div class="card viz-card">
+                    <div class="card-header">
+                        <h2>Network Topology</h2>
+                    </div>
+                    <div id="viz-container">
+                        <canvas id="topology-canvas"></canvas>
+                    </div>
                 </div>
-                <div id="viz-container">
-                    <canvas id="topology-canvas"></canvas>
+
+                <div class="card history-card">
+                    <div class="card-header">
+                        <h2>Mission History</h2>
+                    </div>
+                    <div class="history-table-wrapper">
+                        <table id="bundle-history">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Source</th>
+                                    <th>Dest</th>
+                                    <th>Size</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <div class="card history-card">
-                <div class="card-header">
-                    <h2>Mission History <small>Bundle Transit Log</small></h2>
-                </div>
-                <div class="history-table-wrapper">
-                    <table id="bundle-history">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Source</th>
-                                <th>Dest</th>
-                                <th>Size</th>
-                                <th>Status</th>
-                                <th>Modules</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body"></tbody>
-                    </table>
+            <!-- Configuration View -->
+            <div id="view-config" class="tab-content">
+                <div class="card config-card">
+                    <div class="card-header"><h2>System Configuration</h2></div>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>Protocol Stack</label>
+                            <div class="val">Bundle Protocol version 7 (BPv7)</div>
+                        </div>
+                        <div class="config-item">
+                            <label>Routing Engine</label>
+                            <div class="val">Contact Graph Routing (CGR)</div>
+                        </div>
+                        <div class="config-item">
+                            <label>Convergence Layers</label>
+                            <div class="val">UDP (CLI/CLO)</div>
+                        </div>
+                        <div class="config-item">
+                            <label>Naming Scheme</label>
+                            <div class="val">IPN (Integer Port Numbers)</div>
+                        </div>
+                        <div class="config-item">
+                            <label>Security</label>
+                            <div class="val">FastAPI Modular Hooks</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

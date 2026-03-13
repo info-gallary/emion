@@ -107,10 +107,31 @@ button {
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
 .status-dot.live { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
+/* ── Tab System ── */
+.tab-switcher { display: flex; flex-direction: column; gap: 4px; }
+.tab-btn {
+    text-align: left; background: transparent; color: var(--text-secondary);
+    padding: 10px 12px; border: 1px solid transparent; width: 100%;
+}
+.tab-btn:hover { background: #f1f5f9; }
+.tab-btn.active { 
+    background: #eff6ff; color: var(--accent); border-color: #dbeafe;
+}
+
+.tab-content { display: none; height: 100%; flex-direction: column; gap: 20px; }
+.tab-content.active { display: flex; }
+
+/* ── Configuration Explorer ── */
+.config-card { flex: 1; padding: 24px; }
+.config-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; padding: 20px 0; }
+.config-item { border-left: 3px solid var(--accent); padding-left: 16px; }
+.config-item label { display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.config-item .val { font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+
 /* ── Workspace ── */
 .workspace {
     flex: 1; height: 100%; padding: 20px;
-    display: flex; flex-direction: column; gap: 20px;
+    overflow: hidden; /* Important for no-scroll */
 }
 
 .viz-card { flex: 3; display: flex; flex-direction: column; overflow: hidden; }
