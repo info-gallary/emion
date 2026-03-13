@@ -88,10 +88,7 @@ def create_app() -> "FastAPI":
                 engines[nid] = eng
                 results.append({"node": nid, "status": "engine_attached"})
             except Exception as e:
-                err_msg = str(e)
-                results.append({"node": nid, "status": "attach_error", "msg": err_msg})
-                # Broadcast error to UI
-                await broadcast({"type": "network_error", "node": nid, "msg": f"Engine Attach Failed: {err_msg}"})
+                results.append({"node": nid, "status": "attach_error", "msg": str(e)})
         await broadcast({"type": "network_started", "nodes": list(nodes.keys())})
         return {"status": "started", "details": results}
 

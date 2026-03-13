@@ -19,10 +19,10 @@ import time
 from warnings import warn
 
 # Import pyion modules
-from . import utils
+import pyion.utils as utils
 
 # Import C Extension
-from . import _mem
+import _mem
 
 # Define all methods/vars exposed at pyion
 __all__ = ['SdrProxy', 'PsmProxy']

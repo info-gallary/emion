@@ -19,18 +19,18 @@ from unittest.mock import Mock
 from warnings import warn
 
 # Module imports
-from . import bp
-from . import cfdp
-from . import constants as cst
-from . import ltp
-from . import mem
-from . import utils
+import pyion
+import pyion.bp as bp
+import pyion.cfdp as cfdp
+import pyion.constants as cst
+import pyion.ltp as ltp
+import pyion.mem as mem
+import pyion.utils as utils
 
 # Import C Extensions
-# These will be emion.pyion._bp etc.
-from . import _bp
-from . import _cfdp
-from . import _ltp
+import _bp
+import _cfdp
+import _ltp
 
 # Define all methods/vars exposed at pyion
 __all__ = ['get_bp_proxy', 'get_cfdp_proxy', 'get_ltp_proxy', 'get_sdr_proxy',

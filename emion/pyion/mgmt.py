@@ -14,10 +14,10 @@ from unittest.mock import Mock
 from warnings import warn
 
 # pyion imports
-from . import utils
+import pyion.utils as utils
 
 # Import C Extension
-from . import _mgmt
+import _mgmt
 
 # Define all methods/vars exposed at pyion
 _cgr    = ['cgr_list_contacts', 'cgr_list_ranges', 'cgr_add_contact', 

@@ -36,13 +36,13 @@ import warnings
 # ``import pyion`` instead of having to do one of the following:
 #   - ``from pyion import pyion``
 #   - ``import pyion.pyion as pyion``
-from .proxies import *
-from .utils import *
-from .constants import *
+from pyion.proxies import *
+from pyion.utils import *
+from pyion.constants import *
 
 # Handle case where _mgmt was not compiled during setup
 try:
-    from .mgmt import *
+    from pyion.mgmt import *
 except ImportError:
     warnings.warn("Pyion's management module is not installed.")
 

@@ -18,15 +18,12 @@ from warnings import warn
 import contextlib
 
 # Module imports
-from . import utils
-from .mgmt import sm_task_yield
+import pyion
+import pyion.utils as utils
+from pyion.mgmt import sm_task_yield
 
 # Import C Extension
-try:
-    from . import _ltp
-except ImportError:
-    from unittest.mock import Mock
-    _ltp = Mock()
+import _ltp
 
 # Define all methods/vars exposed at pyion
 __all__ = [

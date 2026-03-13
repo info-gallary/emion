@@ -6,6 +6,7 @@ No dummies — requires a running ION node.
 
 import os
 import time
+import pyion
 
 
 class EmionEngine:
@@ -22,9 +23,6 @@ class EmionEngine:
     def attach(self, retries=5, delay=2):
         """Attach to the ION shared-memory region via pyion."""
         print(f"[EmION] Attaching engine to Node {self.node_id}...")
-
-        # Deferred import to allow bootstrapping
-        from emion import pyion
 
         # Ensure ION_NODE_LIST_DIR is unset — we use cwd instead
         os.environ.pop("ION_NODE_LIST_DIR", None)

@@ -18,11 +18,12 @@ from threading import Thread
 from warnings import warn
 
 # Module imports
-from . import utils
-from .constants import BpEcsEnumeration, BpCustodyEnum
+import pyion
+import pyion.utils as utils
+from pyion.constants import BpEcsEnumeration, BpCustodyEnum
 
 # Import C Extension
-from . import _bp
+import _bp
 
 # Define all methods/vars exposed at pyion
 __all__ = ['Endpoint']

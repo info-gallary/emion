@@ -17,11 +17,12 @@ from threading import Event, Thread
 from warnings import warn
 
 # Module imports
-from . import utils
-from .constants import CfdpEventEnum
+import pyion
+import pyion.utils as utils
+from pyion.constants import CfdpEventEnum
 
 # Import C Extension
-from . import _cfdp
+import _cfdp
 
 # Define all methods/vars exposed at pyion
 __all__ = ['Entity']

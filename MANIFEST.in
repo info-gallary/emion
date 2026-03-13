@@ -1,4 +1,3 @@
 include README.md
 include LICENSE
 recursive-include emion/dashboard/static *
-recursive-include emion/pyion *.c *.h

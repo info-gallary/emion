@@ -18,7 +18,7 @@ import os
 from pathlib import Path
 import time
 
-from . import __init__ as pyion
+import pyion
 
 # ============================================================================
 # === Define variables/methods/classes that will be directly importable
