@@ -118,13 +118,26 @@ button {
 .workspace {
     flex: 1; height: 100%; padding: 20px;
     display: flex; flex-direction: column; gap: 20px;
+    min-width: 0; /* Firefox fix: Allow shrinking */
 }
 
-.viz-card { flex: 3; display: flex; flex-direction: column; overflow: hidden; }
+.viz-card { 
+    flex: 3; 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+    min-height: 0; /* Firefox fix: contain contents */
+}
 #viz-container { flex: 1; width: 100%; overflow: hidden; position: relative; background: white; }
 #topology-canvas { display: block; width: 100%; height: 100%; }
 
-.history-card { flex: 2; overflow: hidden; display: flex; flex-direction: column; }
+.history-card { 
+    flex: 2; 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; /* Firefox fix: contain history table */
+}
 .history-table-wrapper { flex: 1; overflow-y: auto; padding: 0 12px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
 th { text-align: left; padding: 12px 8px; border-bottom: 2px solid var(--bg-main); color: var(--text-muted); position: sticky; top: 0; background: white; z-index: 10; }
@@ -135,13 +148,19 @@ td { padding: 10px 8px; border-bottom: 1px solid var(--bg-main); font-family: 'I
 .analytics {
     width: var(--analytics-w);
     height: 100%; 
-    padding: 20px; /* Unified padding for symmetry */
+    padding: 20px; 
     display: flex; 
     flex-direction: column; 
     gap: 20px;
+    min-width: 0; /* Firefox fix */
 }
 
-.chart-card { flex: 1; display: flex; flex-direction: column; }
+.chart-card { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; /* Firefox fix */
+}
 .d3-chart { flex: 1; width: 100%; background: #ffffff; }
 
 .log-card { flex: 1; display: flex; flex-direction: column; }
