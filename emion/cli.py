@@ -45,27 +45,50 @@ def _setup():
     import subprocess
     import os
     import shutil
+    import tempfile
 
-    print("\n  ⚛ EmION Automated Dependency Setup")
+    print("\n  ⚛ EmION Standalone Universal Setup")
     print("  ====================================")
     
     # 1. Check for ION-DTN
     if not shutil.which("ionadmin"):
-        print("  [1/2] Installing ION-DTN C-engine...")
-        # We reuse the logic from install.sh but in a pythonic way
+        print("  [1/2] ION-DTN not found. Starting Autonomous Build...")
+        
         try:
-            # We assume a Linux environment as per README
-            setup_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), "install.sh")
-            if os.path.exists(setup_script):
-                subprocess.run(["bash", setup_script], check=True)
-            else:
-                # Fallback: Download and install from NASA source if script not found
-                print("  Installing via legacy source build...")
-                # (Simplified for briefness, usually we'd curl/tar/make)
-                subprocess.run(["sudo", "apt-get", "update"], check=True)
-                subprocess.run(["sudo", "apt-get", "install", "-y", "build-essential", "cmake", "mercurial"], check=True)
+            # Install system dependencies
+            print("      (Installing system build tools...)")
+            subprocess.run(["sudo", "apt-get", "update"], check=True)
+            subprocess.run(["sudo", "apt-get", "install", "-y", 
+                          "build-essential", "cmake", "automake", "libtool", "wget", "tar"], check=True)
+            
+            # Download and Build ION-DTN
+            with tempfile.TemporaryDirectory() as tmpdir:
+                ion_url = "https://github.com/NASA-AMMOS/ION-DTN/archive/refs/tags/v4.1.2.tar.gz"
+                print(f"      (Downloading ION-DTN v4.1.2...)")
+                subprocess.run(["wget", ion_url, "-O", os.path.join(tmpdir, "ion.tar.gz")], check=True)
+                subprocess.run(["tar", "-xzf", os.path.join(tmpdir, "ion.tar.gz"), "-C", tmpdir], check=True)
+                
+                # Find the extracted directory
+                extracted_dir = None
+                for d in os.listdir(tmpdir):
+                    if os.path.isdir(os.path.join(tmpdir, d)) and "ION-DTN" in d:
+                        extracted_dir = os.path.join(tmpdir, d)
+                        break
+                
+                if not extracted_dir:
+                    raise Exception("Failed to find extracted ION-DTN directory.")
+                
+                print(f"      (Compiling & Installing ION-DTN... this may take a few minutes)")
+                # Build steps
+                subprocess.run(["./configure"], cwd=extracted_dir, check=True)
+                subprocess.run(["make", "-j", str(os.cpu_count() or 2)], cwd=extracted_dir, check=True)
+                subprocess.run(["sudo", "make", "install"], cwd=extracted_dir, check=True)
+                subprocess.run(["sudo", "ldconfig"], check=True)
+                
+            print("  ✅ ION-DTN installed globally.")
         except Exception as e:
-            print(f"  ❌ Failed to install ION-DTN: {e}")
+            print(f"  ❌ Failed to autonomously install ION-DTN: {e}")
+            print("     Manual fix: Download ION-DTN v4.1.2, run ./configure && make && sudo make install")
             return
     else:
         print("  ✅ ION-DTN already installed.")
@@ -83,10 +106,9 @@ def _setup():
         
         # Determine ION_HOME
         # Aggressive Search:
-        # 1. Local project source
-        # 2. Parent directory's project source (if installed via pip -e)
-        # 3. Standard Desktop location (where user likely has it)
-        # 4. System paths
+        # 1. Local project source (if current user has it)
+        # 2. Parent directory (Emion project root)
+        # 3. Standard locations (where we just installed it)
         
         search_paths = [
             os.path.join(os.path.dirname(os.path.dirname(__file__)), "ION-DTN"),
@@ -103,34 +125,26 @@ def _setup():
                 break
         
         if not ion_home:
-            # Try to guess from ionadmin binary
+            # Guess from binary for global installs
             ionadmin_path = shutil.which("ionadmin")
             if ionadmin_path:
                 ion_home = os.path.dirname(os.path.dirname(ionadmin_path))
         
         if ion_home:
             env["ION_HOME"] = ion_home
-            print(f"      (Found ION path: {ion_home})")
-        else:
-            print("  ⚠️  Warning: ION_HOME source tree not found.")
-            print("     Build usually requires the ION source directory (e.g. ~/Desktop/Emion/ION-DTN)")
-
-        # Determine pyion source
-        # Aggressive Search for pyion source
-        pyion_search = [
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyion"),
-            os.path.expanduser("~/Desktop/Emion/pyion")
-        ]
+            print(f"      (Setting build context ION_HOME={ion_home})")
         
+        # Determine pyion source
+        # Note: We use v4.1.3 for its BPv7 stability
         pyion_source = "git+https://github.com/nasa-jpl/pyion.git@v4.1.3"
-        for p in pyion_search:
-            if os.path.exists(os.path.join(p, "setup.py")):
-                pyion_source = os.path.abspath(p)
-                print(f"      (Found local pyion source: {pyion_source})")
-                break
-
-        if pyion_source.startswith("git"):
-            print(f"      (Installing from remote branch: v4.1.3)")
+        
+        # Check if we are in the source tree (developer mode)
+        local_pyion = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyion")
+        if os.path.exists(os.path.join(local_pyion, "setup.py")):
+            pyion_source = os.path.abspath(local_pyion)
+            print(f"      (Found local pyion source: {pyion_source})")
+        else:
+            print(f"      (Installing from GitHub: v4.1.3)")
 
         # Performance/Compatibility check: use uv if available, otherwise pip
         installer = None
@@ -142,7 +156,7 @@ def _setup():
             installer = ["pip3"]
 
         if not installer:
-            print("  ❌ Error: Neither 'pip' nor 'uv' found in this environment!")
+            print("  ❌ Error: Neither 'pip' nor 'uv' found!")
             return
 
         try:
@@ -151,8 +165,6 @@ def _setup():
             print("  ✅ pyion installed successfully.")
         except Exception as e:
             print(f"  ❌ Failed to install pyion: {e}")
-            print("\n  💡 Pro-tip: If you have the Emion source code, try: bash install.sh")
-            print("     Or set ION_HOME and install manually: ION_HOME=/path/to/ion PYION_BP_VERSION=BPv7 pip install .")
             return
 
     print("\n  🎉 Setup Complete! Run 'emion dashboard' to start.\n")

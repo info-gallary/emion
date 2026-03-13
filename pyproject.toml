@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emion"
-version = "0.3.9"
+version = "0.4.0"
 authors = [
   { name="EmION Team", email="dev@info-gallary.com" },
 ]
