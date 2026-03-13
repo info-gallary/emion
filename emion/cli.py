@@ -76,11 +76,28 @@ def _setup():
         print("  ✅ pyion already installed.")
     except ImportError:
         print("  [2/2] Installing pyion bindings...")
+        
+        # Performance/Compatibility check: use uv if available, otherwise pip
+        installer = None
+        if shutil.which("uv"):
+            installer = ["uv", "pip"]
+        elif shutil.which("pip"):
+            installer = [sys.executable, "-m", "pip"]
+        elif shutil.which("pip3"):
+            installer = ["pip3"]
+
+        if not installer:
+            print("  ❌ Error: Neither 'pip' nor 'uv' found in this environment!")
+            print("     Please install pyion manually: pip install git+https://github.com/nasa-jpl/pyion.git")
+            return
+
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "git+https://github.com/nasa-jpl/pyion.git"], check=True)
+            print(f"      (Using {' '.join(installer)})")
+            subprocess.run(installer + ["install", "git+https://github.com/nasa-jpl/pyion.git"], check=True)
             print("  ✅ pyion installed successfully.")
         except Exception as e:
             print(f"  ❌ Failed to install pyion: {e}")
+            print("     Try running: pip install git+https://github.com/nasa-jpl/pyion.git")
             return
 
     print("\n  🎉 Setup Complete! Run 'emion dashboard' to start.\n")
