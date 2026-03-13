@@ -40,6 +40,7 @@ html, body {
     border: 1px solid var(--border);
     border-radius: var(--r);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden; /* Prevent content bleed */
 }
 
 .card-header {
@@ -61,8 +62,14 @@ html, body {
 .sidebar {
     width: var(--sidebar-w);
     height: 100%;
-    border-radius: 0; border: none; border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; padding: 20px;
+    border-radius: 0; 
+    border: none; 
+    border-right: 1px solid var(--border);
+    display: flex; 
+    flex-direction: column; 
+    padding: 24px;
+    box-shadow: none !important; /* Fix shadow bleed corruption */
+    background: white;
 }
 
 .brand { margin-bottom: 32px; }
@@ -127,14 +134,17 @@ td { padding: 10px 8px; border-bottom: 1px solid var(--bg-main); font-family: 'I
 /* ── Analytics ── */
 .analytics {
     width: var(--analytics-w);
-    height: 100%; padding: 20px 20px 20px 0;
-    display: flex; flex-direction: column; gap: 20px;
+    height: 100%; 
+    padding: 20px; /* Unified padding for symmetry */
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px;
 }
 
-.chart-card { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-.d3-chart { flex: 1; width: 100%; background: #fafafa; }
+.chart-card { flex: 1; display: flex; flex-direction: column; }
+.d3-chart { flex: 1; width: 100%; background: #ffffff; }
 
-.log-card { flex: 1.2; overflow: hidden; display: flex; flex-direction: column; }
+.log-card { flex: 1; display: flex; flex-direction: column; }
 .console-log {
     flex: 1; overflow-y: auto; padding: 12px;
     font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;

@@ -275,12 +275,6 @@ function draw() {
         ctx.fillText(`N${nd.node_id}`, nd.x, nd.y);
     });
 
-    requestAnimationFrame(draw);
-}
-
-function animateBundle(from, to) { animBundles.push({ from, to, p: 0 }); }
-    });
-
     // Empty state
     if (nodeList.length === 0) {
         ctx.fillStyle = '#94a3b8'; ctx.font = '500 16px Inter'; ctx.textAlign = 'center';
@@ -290,6 +284,4 @@ function animateBundle(from, to) { animBundles.push({ from, to, p: 0 }); }
     requestAnimationFrame(draw);
 }
 
-function animateBundle(from, to) {
-    animBundles.push({ from, to, p: 0 });
-}
+function animateBundle(from, to) { animBundles.push({ from, to, p: 0 }); }
