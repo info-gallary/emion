@@ -117,21 +117,28 @@ def _build():
     if os.path.exists(pkg_dir / "setup.py"):
         root_dir = pkg_dir
     else:
-        # If installed, we might not have the source. 
-        # But for EmION, the sdist includes everything.
-        # However, 'pip install --force-reinstall' is the best way for installed users.
         print("  [!] Running from installed package. Attempting force-reinstall build...")
+        
+        # Determine the installer (pip or uv)
+        installer_cmd = [sys.executable, "-m", "pip", "install", "emion", "--force-reinstall", "--no-cache-dir"]
+        
+        # Try to detect if we should use uv instead of pip
+        if not shutil.which("pip") and shutil.which("uv"):
+             print("  [i] 'pip' not found, falling back to 'uv'...")
+             installer_cmd = ["uv", "pip", "install", "emion", "--force-reinstall", "--no-cache"]
+
         try:
-            subprocess.run([sys.executable, "-m", "pip", "install", "emion", "--force-reinstall", "--no-cache-dir"], check=True)
-            print("  ✅ Bindings rebuilt successfully via pip.")
+            subprocess.run(installer_cmd, check=True)
+            print("  ✅ Bindings rebuilt successfully.")
             return
         except Exception as e:
-            print(f"  ❌ Failed to rebuild via pip: {e}")
+            print(f"  ❌ Failed to rebuild: {e}")
+            if "No module named pip" in str(e) and shutil.which("uv"):
+                print("     (Tip: Your venv lacks pip. Try: 'uv pip install emion --force-reinstall --no-cache')")
             return
 
     print(f"  [1/1] Building extensions in {root_dir}...")
     try:
-        # Build extensions inplace
         subprocess.run([sys.executable, "setup.py", "build_ext", "--inplace"], cwd=root_dir, check=True)
         print("  ✅ Bindings built successfully.")
     except Exception as e:

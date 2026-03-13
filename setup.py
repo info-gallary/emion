@@ -35,9 +35,17 @@ def get_extensions():
                 sys.stderr.write(f"INFO: Auto-detected ION: {actual_ion_path} via PATH\n")
 
     if not actual_ion_path:
-        sys.stderr.write("WARNING: ION-DTN headers not found. Skipping C extensions.\n")
-        sys.stderr.write("To force build, set ION_HOME=/path/to/ion or install via 'emion setup'.\n")
-        return []
+        # If still missing, we must FAIL the build to avoid "No module named _bp" later.
+        msg = (
+            "\n" + "="*60 + "\n"
+            "ERROR: ION-DTN headers not found! C-extensions CANNOT be built.\n"
+            "To fix this:\n"
+            "  1. Run 'emion setup' to install ION-DTN autonomously.\n"
+            "  2. Or set ION_HOME=/path/to/ion-source before installing.\n"
+            "="*60 + "\n"
+        )
+        sys.stderr.write(msg)
+        raise RuntimeError("ION-DTN headers missing. Cannot build C bindings.")
 
     # Paths for ION APIs
     ion_p = Path(actual_ion_path)
@@ -123,7 +131,7 @@ def get_extensions():
 
 setup(
     name="emion",
-    version="0.5.3",
+    version="0.5.4",
     author="EmION Team",
     author_email="dev@info-gallary.com",
     packages=find_packages(),
