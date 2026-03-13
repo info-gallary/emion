@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="emion",
-    version="0.3.8",
+    version="0.3.9",
     author="EmION Team",
     author_email="dev@info-gallary.com",
     packages=find_packages(),
