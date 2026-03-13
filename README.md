@@ -20,18 +20,23 @@ EmION relies on the **NASA-JPL ION-DTN** C-engine. Choose your platform:
 ## 🚀 2. Installation
 
 ### Quick Start (PyPI)
-Install the framework and dashboard directly from PyPI:
-```bash
-pip install "emion[dashboard]"
-```
+1. Install the framework:
+   ```bash
+   pip install "emion[dashboard]"
+   ```
+2. **Setup Dependencies**:
+   EmION requires the ION-DTN C-engine. Automatically install everything with:
+   ```bash
+   emion setup
+   ```
 
-### One-Click Installer (Linux/WSL)
-For a complete environment setup (including building ION-DTN and pyion from source):
+### Developer Setup (Source)
+For a manual environment setup:
 ```bash
 git clone https://github.com/info-gallary/emion.git
 cd emion
 chmod +x install.sh
-./install.sh
+./install.sh # Builds everything from source
 ```
 
 ---
