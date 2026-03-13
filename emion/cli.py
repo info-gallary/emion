@@ -102,6 +102,7 @@ def _setup():
 
 def _build():
     import subprocess
+    import shutil
     import sys
     import os
     from pathlib import Path
