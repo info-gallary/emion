@@ -123,7 +123,7 @@ def get_extensions():
 
 setup(
     name="emion",
-    version="0.5.2",
+    version="0.5.3",
     author="EmION Team",
     author_email="dev@info-gallary.com",
     packages=find_packages(),

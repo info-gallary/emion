@@ -22,10 +22,11 @@ def main():
     d.add_argument("--host", default="0.0.0.0")
     d.add_argument("--port", type=int, default=8420)
 
-    sub.add_parser("setup", help="Install ION-DTN and pyion dependencies")
+    sub.add_parser("setup", help="Install ION-DTN and build pyion bindings")
+    sub.add_parser("build", help="Manually build/rebuild pyion C-bindings")
     sub.add_parser("info", help="Show ION-DTN status")
     sub.add_parser("test", help="Run 2-node comm test")
-
+    
     args = parser.parse_args()
 
     if args.cmd == "dashboard":
@@ -33,6 +34,8 @@ def main():
         run(host=args.host, port=args.port)
     elif args.cmd == "setup":
         _setup()
+    elif args.cmd == "build":
+        _build()
     elif args.cmd == "info":
         _info()
     elif args.cmd == "test":
@@ -93,7 +96,47 @@ def _setup():
     else:
         print("  ✅ ION-DTN already installed.")
 
-    print("\n  🎉 Setup Complete! Run 'emion dashboard' to start.\n")
+    print("\n  🎉 ION-DTN Setup Complete!")
+    _build()
+
+
+def _build():
+    import subprocess
+    import sys
+    import os
+    from pathlib import Path
+
+    print("\n  ⚛ EmION C-Extension Build")
+    print("  ===========================")
+    
+    # Try to find the root of the package to run build
+    import emion
+    pkg_dir = Path(emion.__file__).parent.parent
+    
+    # Check if we are in a source tree or installed package
+    if os.path.exists(pkg_dir / "setup.py"):
+        root_dir = pkg_dir
+    else:
+        # If installed, we might not have the source. 
+        # But for EmION, the sdist includes everything.
+        # However, 'pip install --force-reinstall' is the best way for installed users.
+        print("  [!] Running from installed package. Attempting force-reinstall build...")
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "emion", "--force-reinstall", "--no-cache-dir"], check=True)
+            print("  ✅ Bindings rebuilt successfully via pip.")
+            return
+        except Exception as e:
+            print(f"  ❌ Failed to rebuild via pip: {e}")
+            return
+
+    print(f"  [1/1] Building extensions in {root_dir}...")
+    try:
+        # Build extensions inplace
+        subprocess.run([sys.executable, "setup.py", "build_ext", "--inplace"], cwd=root_dir, check=True)
+        print("  ✅ Bindings built successfully.")
+    except Exception as e:
+        print(f"  ❌ Build failed: {e}")
+        print("     Ensure ION-DTN is installed and headers are in /usr/local/include")
 
 
 def _info():
@@ -111,9 +154,10 @@ def _info():
     try:
         from emion import pyion
         print(f"  pyion (internal): ✅ available")
-    except ImportError:
+    except ImportError as e:
         pyion_found = False
-        print(f"  pyion (internal): ❌ not built (Run: pip install emion --force-reinstall)")
+        print(f"  pyion (internal): ❌ not built or linked ({e})")
+        print(f"  (Run: pip install emion --force-reinstall)")
 
     if not ion_found:
         print("\n  ⚠️  ION-DTN missing! Run 'emion setup' to fix.")
