@@ -81,18 +81,48 @@ def _setup():
         env = os.environ.copy()
         env["PYION_BP_VERSION"] = "BPv7"
         
-        # Determine ION_HOME (prioritize local sources)
+        # Determine ION_HOME
+        # 1. Check local project source
         local_ion = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ION-DTN")
-        if os.path.exists(local_ion):
-            env["ION_HOME"] = os.path.abspath(local_ion)
-            print(f"      (Using local ION source: {env['ION_HOME']})")
+        # 2. Check common system installation paths
+        system_ion_paths = ["/usr/local", "/usr", "/opt/ion"]
         
+        ion_home = None
+        if os.path.exists(local_ion):
+            ion_home = os.path.abspath(local_ion)
+            print(f"      (Using local ION source: {ion_home})")
+        else:
+            # Try to find where ionadmin is and use its parent or standard locations
+            ionadmin_path = shutil.which("ionadmin")
+            if ionadmin_path:
+                # If ionadmin is in /usr/bin/ionadmin, ION_HOME might be /usr
+                # If in /usr/local/bin/ionadmin, ION_HOME might be /usr/local
+                potential_home = os.path.dirname(os.path.dirname(ionadmin_path))
+                if os.path.exists(os.path.join(potential_home, "include", "ici.h")) or \
+                   os.path.exists(os.path.join(potential_home, "ici", "include", "ici.h")):
+                    ion_home = potential_home
+            
+            if not ion_home:
+                for p in system_ion_paths:
+                    if os.path.exists(os.path.join(p, "include", "ici.h")):
+                        ion_home = p
+                        break
+        
+        if ion_home:
+            env["ION_HOME"] = ion_home
+        else:
+            print("  ⚠️  Warning: ION_HOME not found. Build might fail if headers are missing.")
+            print("     Consider setting ION_HOME=/path/to/ion-source before setup.")
+
         # Determine pyion source
+        # Note: We use v4.1.3 as requested by the user
         local_pyion = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyion")
-        pyion_source = "git+https://github.com/nasa-jpl/pyion.git@v4.1.2"
+        pyion_source = "git+https://github.com/nasa-jpl/pyion.git@v4.1.3"
         if os.path.exists(local_pyion):
             pyion_source = os.path.abspath(local_pyion)
             print(f"      (Using local pyion source: {pyion_source})")
+        else:
+            print(f"      (Installing from remote branch: v4.1.3)")
 
         # Performance/Compatibility check: use uv if available, otherwise pip
         installer = None
@@ -105,7 +135,7 @@ def _setup():
 
         if not installer:
             print("  ❌ Error: Neither 'pip' nor 'uv' found in this environment!")
-            print("     Please install pyion manually: pip install git+https://github.com/nasa-jpl/pyion.git@v4.1.2")
+            print(f"     Please install pyion manually: pip install {pyion_source}")
             return
 
         try:
