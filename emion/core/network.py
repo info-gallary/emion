@@ -8,7 +8,6 @@ import subprocess
 from typing import List, Dict, Optional
 from emion.core.node import EmionNode
 from emion.core.engine import EmionEngine
-from emion.plugins.base import APIPlugin
 
 _nodes: Dict[int, EmionNode] = {}
 _engines: Dict[int, EmionEngine] = {}
@@ -93,6 +92,7 @@ def send_bundle(src: int, dst: int, payload: str):
 
 def attach_plugin(url: str, target_nodes: str = "all"):
     """Attach an external anomaly/security module."""
+    from emion.plugins.base import APIPlugin
     plugin = APIPlugin(base_url=url, name=url)
     if plugin.health_check():
         _plugins[url] = plugin
