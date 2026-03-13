@@ -107,8 +107,8 @@ twine upload dist/*
 
 ## 🏗️ Project Structure
 - `emion/` — Core BPv7 orchestration.
+- `docs/` — [Coding Guide](docs/coding_guide.md) & [Usage Notebook](docs/usage_demo.ipynb).
 - `ION-DTN/` — Authentic NASA-JPL C-Engine.
-- `pyion/` — Python C-bindings for ION.
 - `Dockerfile` — Professional self-contained environment.
 - `README.md` — This guide.
 
