@@ -24,7 +24,7 @@ class EmionEngine:
         print(f"[EmION] Attaching engine to Node {self.node_id}...")
 
         # Deferred import to allow bootstrapping
-        import pyion
+        from emion import pyion
 
         # Ensure ION_NODE_LIST_DIR is unset — we use cwd instead
         os.environ.pop("ION_NODE_LIST_DIR", None)

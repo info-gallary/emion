@@ -52,7 +52,7 @@ def _setup():
     
     # 1. Check for ION-DTN
     if not shutil.which("ionadmin"):
-        print("  [1/2] ION-DTN not found. Starting Autonomous Build...")
+        print("  [1/1] ION-DTN not found. Starting Autonomous Build...")
         
         try:
             # Install system dependencies
@@ -93,80 +93,6 @@ def _setup():
     else:
         print("  ✅ ION-DTN already installed.")
 
-    # 2. Check for pyion
-    try:
-        import pyion
-        print("  ✅ pyion already installed.")
-    except ImportError:
-        print("  [2/2] Installing pyion bindings...")
-        
-        # Prepare environment for pyion build
-        env = os.environ.copy()
-        env["PYION_BP_VERSION"] = "BPv7"
-        
-        # Determine ION_HOME
-        # Aggressive Search:
-        # 1. Local project source (if current user has it)
-        # 2. Parent directory (Emion project root)
-        # 3. Standard locations (where we just installed it)
-        
-        search_paths = [
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), "ION-DTN"),
-            os.path.expanduser("~/Desktop/Emion/ION-DTN"),
-            "/usr/local",
-            "/usr"
-        ]
-        
-        ion_home = None
-        for p in search_paths:
-            if os.path.exists(os.path.join(p, "ici", "include", "ici.h")) or \
-               os.path.exists(os.path.join(p, "include", "ion.h")):
-                ion_home = os.path.abspath(p)
-                break
-        
-        if not ion_home:
-            # Guess from binary for global installs
-            ionadmin_path = shutil.which("ionadmin")
-            if ionadmin_path:
-                ion_home = os.path.dirname(os.path.dirname(ionadmin_path))
-        
-        if ion_home:
-            env["ION_HOME"] = ion_home
-            print(f"      (Setting build context ION_HOME={ion_home})")
-        
-        # Determine pyion source
-        # Note: We use v4.1.3 for its BPv7 stability
-        pyion_source = "git+https://github.com/nasa-jpl/pyion.git@v4.1.3"
-        
-        # Check if we are in the source tree (developer mode)
-        local_pyion = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyion")
-        if os.path.exists(os.path.join(local_pyion, "setup.py")):
-            pyion_source = os.path.abspath(local_pyion)
-            print(f"      (Found local pyion source: {pyion_source})")
-        else:
-            print(f"      (Installing from GitHub: v4.1.3)")
-
-        # Performance/Compatibility check: use uv if available, otherwise pip
-        installer = None
-        if shutil.which("uv"):
-            installer = ["uv", "pip"]
-        elif shutil.which("pip"):
-            installer = [sys.executable, "-m", "pip"]
-        elif shutil.which("pip3"):
-            installer = ["pip3"]
-
-        if not installer:
-            print("  ❌ Error: Neither 'pip' nor 'uv' found!")
-            return
-
-        try:
-            print(f"      (Executing: {' '.join(installer)} install {pyion_source})")
-            subprocess.run(installer + ["install", pyion_source], check=True, env=env)
-            print("  ✅ pyion installed successfully.")
-        except Exception as e:
-            print(f"  ❌ Failed to install pyion: {e}")
-            return
-
     print("\n  🎉 Setup Complete! Run 'emion dashboard' to start.\n")
 
 
@@ -183,15 +109,14 @@ def _info():
     
     pyion_found = True
     try:
-        import pyion
-        # Safe version check: pyion 4.1.2+ might not have __version__
-        print(f"  pyion: ✅ available")
+        from emion import pyion
+        print(f"  pyion (internal): ✅ available")
     except ImportError:
         pyion_found = False
-        print(f"  pyion: ❌ not found")
+        print(f"  pyion (internal): ❌ not built (try reinstalling emion with ION_HOME set)")
 
-    if not ion_found or not pyion_found:
-        print("\n  ⚠️  Dependencies missing! Run 'emion setup' to fix.")
+    if not ion_found:
+        print("\n  ⚠️  ION-DTN missing! Run 'emion setup' to fix.")
     
     try:
         import fastapi

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emion"
-version = "0.4.0"
+version = "0.5.0"
 authors = [
   { name="EmION Team", email="dev@info-gallary.com" },
 ]
@@ -38,7 +38,7 @@ dashboard = [
 emion = "emion.cli:main"
 
 [tool.setuptools]
-packages = ["emion", "emion.core", "emion.dashboard", "emion.plugins"]
+packages = ["emion", "emion.core", "emion.dashboard", "emion.plugins", "emion.pyion"]
 
 [tool.setuptools.package-data]
 emion = ["dashboard/static/*"]
