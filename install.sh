@@ -32,25 +32,8 @@ else
     echo "✅ ION-DTN already present."
 fi
 
-# --- pyion Bootstrap ---
-if ! python3 -c "import pyion" &> /dev/null; then
-    echo "⚠️ pyion not found. Entering Bootstrap Mode..."
-    if [ -d "pyion" ]; then
-        echo "[BOOTSTRAP] Building pyion from Project Source..."
-        cd pyion
-        pip install .
-        cd ..
-        echo "✅ pyion installed successfully."
-    else
-        echo "❌ Error: pyion source directory not found. Cannot bootstrap."
-        exit 1
-    fi
-else
-    echo "✅ pyion already present."
-fi
-
 # 2. EmION Package Installation
-echo "[SETUP] Installing EmION package and dashboard extras..."
+echo "[SETUP] Installing EmION package (with internal pyion C-bindings)..."
 pip install -e ".[dashboard]"
 
 # 3. Environment Check

@@ -24,18 +24,16 @@ COPY ION-DTN ./ION-DTN
 WORKDIR /usr/src/ION-DTN
 RUN ./configure --enable-bpv7 && make -j$(nproc) && make install && ldconfig
 
-# 2. Build & Install pyion (from local source)
-WORKDIR /usr/src
-COPY pyion ./pyion
-WORKDIR /usr/src/pyion
-RUN pip3 install .
-
-# 3. Install EmION (from local source)
+# 2. Install EmION (from local source)
+# This will automatically build the internal pyion C-bindings
+# against the ION-DTN headers/libs installed above.
 WORKDIR /usr/src/emion
 COPY . .
-RUN pip3 install -e ".[dashboard]"
+RUN pip3 install ".[dashboard]"
 
 # Environment setup
+ENV ION_HOME=/usr/local
+ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
 ENV PATH="/usr/local/bin:${PATH}"
 EXPOSE 8420
 
