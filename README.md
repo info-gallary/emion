@@ -91,15 +91,22 @@ See `anomaly_detector.py` for a functional sample implementation.
 
 ---
 
-## 🐳 6. Docker (Self-Contained BPv7)
+### 🐳 One-Command Deployment (Docker)
 
-Run the entire EmION environment (ION-DTN + pyion + Dashboard) without local installation.
+If you have Docker installed, you don't need to clone, install, or compile anything locally. The Docker image is **self-contained**, meaning it includes the NASA ION-DTN engine, all Python bindings, and the Mission Control Dashboard out-of-the-box.
 
-### Build and Run
 ```bash
+# 1. Build the professional image (one-time setup)
 docker build -t emion .
+
+# 2. Launch the entire mission control
 docker run -p 8420:8420 emion
 ```
+
+**Pre-built Image (Zero-Cloning Workflow):**
+If you choose to push your image to a registry (like Docker Hub), then anyone can run it with just one command:
+`docker run -p 8420:8420 your-username/emion`
+This is the ultimate way to share your work—literally no setup required for the user.
 Access Mission Control at `http://localhost:8420`.
 
 ---

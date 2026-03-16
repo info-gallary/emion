@@ -85,6 +85,7 @@ static PyObject *pyion_delete_range(PyObject *self, PyObject *args);
 static PyObject *pyion_ltp_span_exists(PyObject *self, PyObject *args);
 static PyObject *pyion_sm_task_yield(PyObject *self, PyObject *args);
 static PyObject *pyion_find_span(PyObject *self, PyObject *args);
+static PyObject *pyion_get_ion_version(PyObject *self, PyObject *args);
 
 // Define member functions of this module
 static PyMethodDef module_methods[] = {
@@ -101,6 +102,7 @@ static PyMethodDef module_methods[] = {
     {"ltp_span_exists", pyion_ltp_span_exists, METH_VARARGS, ltp_span_exists_docstring},
     {"sm_task_yield", pyion_sm_task_yield, METH_VARARGS, sm_task_yield_docstring},
     {"find_span", pyion_find_span, METH_VARARGS, find_span_docstring},
+    {"get_ion_version", pyion_get_ion_version, METH_VARARGS, "Get ION version string."},
     {NULL, NULL, 0, NULL}
 };
 
@@ -617,6 +619,10 @@ static PyObject *pyion_find_span(PyObject *self, PyObject *args) {
     // TODO hacky but trying to return vspan address
     uintptr_t vspan_addr = (uintptr_t)vspan;
     return PyLong_FromUnsignedLongLong((unsigned long long)vspan_addr);
+}
+
+static PyObject *pyion_get_ion_version(PyObject *self, PyObject *args) {
+    return py_ion_version();
 }
 
 static PyObject *pyion_sm_task_yield(PyObject *self, PyObject *args) {

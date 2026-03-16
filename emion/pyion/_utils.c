@@ -99,6 +99,10 @@ static int py_ion_detach() {
     return 1;
 }
 
+static PyObject* py_ion_version() {
+    return Py_BuildValue("s", getIonVersionNbr());
+}
+
 static int py_bp_attach() {
     // Defined variables
     int ok;

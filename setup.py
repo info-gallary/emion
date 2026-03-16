@@ -22,9 +22,9 @@ ext_modules = [
     ),
     Extension(
         "emion.pyion._ltp",
-        sources=["emion/pyion/_ltp.c", "emion/pyion/base_ltp.c"],
+        sources=["emion/pyion/_ltp.c"],
         include_dirs=include_dirs,
-        libraries=["ltp", "ici"],
+        libraries=["ici", "ltp"],
     ),
     Extension(
         "emion.pyion._mem",
@@ -36,7 +36,7 @@ ext_modules = [
         "emion.pyion._mgmt",
         sources=["emion/pyion/_mgmt.c"],
         include_dirs=include_dirs,
-        libraries=["ici", "bp"],
+        libraries=["ici", "bp", "ltp", "cfdp"],
     ),
     Extension(
         "emion.pyion._utils",
@@ -48,7 +48,7 @@ ext_modules = [
 
 setup(
     name="emion",
-    version="0.2.2",
+    version="0.2.3",
     author="EmION Team",
     author_email="dev@info-gallary.com",
     packages=find_packages(),

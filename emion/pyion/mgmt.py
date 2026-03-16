@@ -14,10 +14,10 @@ from unittest.mock import Mock
 from warnings import warn
 
 # pyion imports
-import pyion.utils as utils
+from . import utils
 
 # Import C Extension
-import _mgmt
+from . import _mgmt
 
 # Define all methods/vars exposed at pyion
 _cgr    = ['cgr_list_contacts', 'cgr_list_ranges', 'cgr_add_contact', 
@@ -26,7 +26,7 @@ _cgr    = ['cgr_list_contacts', 'cgr_list_ranges', 'cgr_add_contact',
 _bp     = ['bp_endpoint_exists', 'bp_add_endpoint', 'bp_list_endpoints']
 _ltp    = ['ltp_span_exists']
 _cfdp   = []
-__all__ = ['find_span', 'sm_task_yield'] + _cgr + _bp + _ltp + _cfdp
+__all__ = ['find_span', 'sm_task_yield', 'get_ion_version'] + _cgr + _bp + _ltp + _cfdp
 
 # ============================================================================
 # === Miscellaneous ION functions
@@ -36,7 +36,11 @@ def find_span(remote_engine_id):
     return _mgmt.find_span(remote_engine_id)
 
 def sm_task_yield():
-    _mgmt.sm_task_yield
+    _mgmt.sm_task_yield()
+
+def get_ion_version():
+    """ Returns the ION version string """
+    return _mgmt.get_ion_version()
 
 # ============================================================================
 # === Functions to add endpoints

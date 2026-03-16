@@ -28,6 +28,8 @@
 # ===========================================================================
 """
 
+__version__ = "1.2.0"
+
 # General imports
 import os
 import warnings    
@@ -36,15 +38,12 @@ import warnings
 # ``import pyion`` instead of having to do one of the following:
 #   - ``from pyion import pyion``
 #   - ``import pyion.pyion as pyion``
-from pyion.proxies import *
-from pyion.utils import *
-from pyion.constants import *
+from .proxies import *
+from .utils import *
+from .constants import *
 
 # Handle case where _mgmt was not compiled during setup
-try:
-    from pyion.mgmt import *
-except ImportError:
-    warnings.warn("Pyion's management module is not installed.")
+from .mgmt import *
 
 # Must be set if multiple ION nodes are run on the same host.
 ION_NODE_LIST_DIR = None
