@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "emion"
 version = "0.4.0"
 authors = [
-  { name="EmION Contributors", email="dev@info-gallary.com" },
+  { name="Team DOMinators", email="dev@info-gallary.com" },
 ]
 description = "Research-grade ION-DTN simulation framework with real BPv7, WLAN mobility, and per-node ML module attachment"
 readme = "README.md"

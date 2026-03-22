@@ -1,5 +1,7 @@
 # ⚛️ EmION — Research-Grade ION-DTN Simulation
 
+> **Built with 💻 by Team DOMinators**
+
 **EmION** is an authentic, research-grade Delay-Tolerant Networking (DTN) simulation framework. Unlike other simulators, EmION uses the **real NASA-JPL ION-DTN C-engine** and **Contact Graph Routing (CGR)** for 100% protocol authenticity — with a state-of-the-art visual dashboard and per-node ML module attachment.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -147,4 +149,7 @@ MIT License — see [LICENSE](LICENSE).
 
 ---
 
-**Built with the real NASA-JPL ION-DTN engine.** ⚛️
+**Authentic. Professional. Space-Ready.** ⚛️
+
+Built by **Team DOMinators** using the real NASA-JPL ION-DTN engine.
+
