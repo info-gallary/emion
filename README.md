@@ -118,15 +118,16 @@ docker run -p 8420:8420 emion
 
 ```
 emion/
-├── emion/                  # Core Python package
+├── emion/                  # Core Python package (BPv7, CGR, Dashboard)
 │   ├── core/               # ION engine, scenarios, WLAN mobility
 │   ├── dashboard/          # FastAPI server + static UI
 │   ├── plugins/            # Module base classes (APIPlugin)
 │   └── pyion/              # C-extension bindings for ION
-├── examples/
+├── examples/               # User-facing research examples
 │   ├── ion_mars/           # CORE XML scenario (5 WLAN nodes)
-│   ├── anomaly_detector/   # Sample ML module
-│   └── core_services/      # CORE GUI integration scripts
+│   ├── anomaly_detector/   # Sample ML inference module
+│   └── core_services/      # CORE integration scripts
+├── scripts/                # Maintenance & developer utilities
 ├── docs/                   # Coding guide & usage notebook
 ├── tests/                  # Test suite
 ├── Dockerfile              # Self-contained build
