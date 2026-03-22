@@ -1,6 +1,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+
+# Packaging
 .pytest_cache/
 .venv/
 venv/
@@ -9,7 +12,31 @@ env/
 emion.egg-info/
 dist/
 build/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Generated node data (ion_mars runtime)
+ion_mars/[0-9]*/
+ion_mars/*.ionrc
+ion_mars/*.log
+ion_mars/scenarios/
+
+# Logs and temp
 *.log
+out.txt
+server.log
 tmp_emion_nodes/
 node_configs/
+
+# IDE
+.vscode/
+.idea/
+
+# Loose root files (now in examples/)
+anomaly_detector.py
+build_mars.py
+run_ion_mars_core.sh
+core_custom_services/
+scripts/

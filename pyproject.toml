@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emion"
-version = "0.2.3"
+version = "0.4.0"
 authors = [
-  { name="EmION Team", email="dev@info-gallary.com" },
+  { name="EmION Contributors", email="dev@info-gallary.com" },
 ]
-description = "Professional ION-DTN Mission Control & BPv7 Simulation Framework"
+description = "Research-grade ION-DTN simulation framework with real BPv7, WLAN mobility, and per-node ML module attachment"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text="MIT" }
-keywords = ["dtn", "ion", "bpv7", "simulation", "space", "networking"]
+keywords = ["dtn", "ion", "bpv7", "simulation", "space", "networking", "delay-tolerant", "cgr", "anomaly-detection"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -20,18 +20,22 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Topic :: Scientific/Engineering",
+    "Topic :: System :: Networking",
 ]
 dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/info-gallary/emion"
 Repository = "https://github.com/info-gallary/emion.git"
+Documentation = "https://github.com/info-gallary/emion/tree/main/docs"
+Issues = "https://github.com/info-gallary/emion/issues"
 
 [project.optional-dependencies]
 dashboard = [
     "fastapi>=0.100.0",
     "uvicorn>=0.20.0",
     "websockets>=11.0",
+    "python-multipart>=0.0.6",
 ]
 
 [project.scripts]

@@ -3,117 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EmION — BPv7 Mission Control</title>
+    <title>EmION — Research-Grade ION-DTN Simulation</title>
+    <meta name="description" content="EmION: Real-time ION-DTN network simulation dashboard with spatial WLAN modelling, BPv7 bundle protocol, and CFDP file delivery.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
-    <!-- D3.js for high-performance visualization -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=20">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body class="mission-control">
-    <div class="dashboard-grid">
-        <!-- Sidebar: Orchestration -->
-        <aside class="sidebar">
-            <div class="brand">
-                <h1>⚛ Em<span class="accent">ION</span></h1>
-                <span class="protocol">BPv7 Core</span>
+<body>
+    <!-- ═══ TOP BAR ═══ -->
+    <header id="top-bar">
+        <div class="bar-left">
+            <button id="btn-toggle-sidebar" class="icon-btn" title="Toggle Sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <div class="brand-group">
+                <span class="brand">EmION</span>
+                <span class="brand-ver">v0.4</span>
             </div>
+            <div class="nav-divider"></div>
+            <span class="brand-sub">ION-DTN COMMAND</span>
+        </div>
+        <div class="bar-center">
+            <span id="sim-mode-badge" class="mode-badge idle">
+                <span class="badge-dot"></span>
+                <span id="badge-text">IDLE</span>
+            </span>
+        </div>
+        <div class="bar-right">
+            <div class="clock-group">
+                <span class="sys-label">SYS_TIME</span>
+                <strong id="sys-time-display">2044.112.00:00:00</strong>
+            </div>
+            <div class="ws-group">
+                <span id="ws-status" class="ws-dot"></span>
+                <span id="ws-label" class="ws-label">Offline</span>
+            </div>
+            <button id="btn-toggle-telemetry" class="icon-btn" title="Toggle Telemetry">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            </button>
+        </div>
+    </header>
 
-            <nav class="nav-section">
-                <h3>🛰 Network</h3>
-                <div class="control-group">
-                    <input type="number" id="input-node-id" placeholder="Node ID" min="1">
-                    <button id="btn-add-node" class="btn-primary">Register</button>
-                    <div id="node-chips" class="chip-container"></div>
-                </div>
-                <div class="control-actions">
-                    <button id="btn-start" class="btn-accent w-full">Initialize Core</button>
-                    <button id="btn-stop" class="btn-danger w-full">Emergency Stop</button>
-                </div>
-            </nav>
+    <!-- ═══ MAIN 3-COLUMN LAYOUT ═══ -->
+    <div id="workspace">
 
-            <nav class="nav-section">
-                <h3>🚀 BPv7 Dispatch</h3>
-                <div class="control-form">
-                    <div class="input-row">
-                        <input type="number" id="input-src" placeholder="Src">
-                        <input type="number" id="input-dst" placeholder="Dst">
+        <!-- ─── LEFT SIDEBAR ─── -->
+        <aside id="sidebar">
+            <div class="sidebar-scroll">
+
+                <!-- Node Control -->
+                <details class="panel" open>
+                    <summary class="panel-header"><span class="panel-icon">⬡</span> NODE CONTROL</summary>
+                    <div class="panel-body">
+                        <div class="field-row">
+                            <input type="number" id="input-node-id" placeholder="Node ID" min="1">
+                            <button id="btn-add-node" class="btn btn-primary">+ Register</button>
+                        </div>
+                        <div id="node-chips" class="chip-row"></div>
+                        <div class="field-row">
+                            <button id="btn-start" class="btn btn-accent">▶ Init Core</button>
+                            <button id="btn-stop" class="btn btn-danger">■ Stop</button>
+                        </div>
                     </div>
-                    <input type="text" id="input-payload" placeholder="Payload" value="MISSION_B_V7">
-                    <button id="btn-send" class="btn-accent w-full">Dispatch Bundle</button>
-                </div>
-            </nav>
+                </details>
 
-            <nav class="nav-section">
-                <h3>🧠 Plug-ins</h3>
-                <div class="control-form">
-                    <input type="text" id="input-mod-url" placeholder="http://local:8421">
-                    <input type="text" id="input-mod-targets" placeholder="Nodes (e.g. 1,2)">
-                    <button id="btn-connect-mod" class="btn-secondary w-full">Attach API</button>
-                </div>
-                <div id="module-list" class="plugin-list"></div>
-            </nav>
+                <!-- Bundle Dispatch -->
+                <details class="panel">
+                    <summary class="panel-header"><span class="panel-icon">◈</span> BUNDLE DISPATCH</summary>
+                    <div class="panel-body">
+                        <div class="field-row">
+                            <input type="number" id="input-src" placeholder="Source Node">
+                            <input type="number" id="input-dst" placeholder="Dest Node">
+                        </div>
+                        <input type="text" id="input-payload" placeholder="Payload" value="MISSION_B_V7">
+                        <button id="btn-send" class="btn btn-accent full-w">↗ Dispatch Bundle</button>
+                    </div>
+                </details>
 
-            <div class="system-health">
-                <div class="health-item">
-                    <span>WS Link:</span>
-                    <span id="ws-status" class="status-dot"></span>
-                </div>
+                <!-- Scenario Engine -->
+                <details class="panel" open>
+                    <summary class="panel-header"><span class="panel-icon">◎</span> SCENARIO ENGINE</summary>
+                    <div class="panel-body">
+                        <select id="scenario-preset">
+                            <option value="">— Load Scenario —</option>
+                        </select>
+                        <div class="field-row">
+                            <button id="btn-sim-start" class="btn btn-primary full-w">▶ Start</button>
+                            <button id="btn-sim-stop" class="btn btn-danger full-w">■ Stop</button>
+                        </div>
+                        <div id="sim-progress" class="progress-box">
+                            <div class="progress-fill"></div>
+                            <span id="sim-status-text">Ready</span>
+                        </div>
+                        <!-- XML Upload -->
+                        <div id="xml-drop-zone" class="drop-zone">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+                            <span>Drop <code>.xml</code> scenario or</span>
+                            <label class="file-label">
+                                Browse Files
+                                <input type="file" id="xml-file-input" accept=".xml" hidden>
+                            </label>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- CFDP Transfer -->
+                <details class="panel">
+                    <summary class="panel-header"><span class="panel-icon">⇄</span> CFDP TRANSFER</summary>
+                    <div class="panel-body">
+                        <div class="field-row">
+                            <input type="number" id="cfdp-src" placeholder="From Node">
+                            <input type="number" id="cfdp-dst" placeholder="To Node">
+                        </div>
+                        <input type="text" id="cfdp-file" placeholder="/path/to/file">
+                        <button id="btn-cfdp-send" class="btn btn-secondary full-w">⇄ Send File</button>
+                    </div>
+                </details>
+
+                <!-- Per-Node Module Manager -->
+                <details class="panel" open>
+                    <summary class="panel-header"><span class="panel-icon">⧫</span> ML MODULES</summary>
+                    <div class="panel-body">
+                        <label class="field-label">Target Node</label>
+                        <select id="mod-node-select">
+                            <option value="">— Select Node —</option>
+                        </select>
+                        <label class="field-label">Module Type</label>
+                        <select id="mod-type-select">
+                            <option value="anomaly">🔍 Anomaly Detector</option>
+                            <option value="bpsec">🔒 BPSec Signer</option>
+                            <option value="traffic">📊 Traffic Shaper</option>
+                            <option value="custom">⚙ Custom Module</option>
+                        </select>
+                        <label class="field-label">Inference API URL</label>
+                        <input type="text" id="input-mod-url" placeholder="http://localhost:8421">
+                        <button id="btn-attach-mod" class="btn btn-accent full-w">⧫ Attach to Node</button>
+                        <div class="field-label" style="margin-top:6px">Active Attachments</div>
+                        <div id="module-list" class="module-attachment-list"></div>
+                    </div>
+                </details>
+
             </div>
         </aside>
 
-        <!-- Main Workspace: Topology -->
-        <section class="workspace">
-            <div class="card viz-card">
-                <div class="card-header">
-                    <h2>Live Topology <small>Bundle Protocol v7 Animation</small></h2>
+        <!-- ─── CENTER: CANVAS + TIMELINE ─── -->
+        <section id="center-stage">
+            <div id="canvas-wrapper">
+                <!-- HUD overlays -->
+                <div class="hud hud-tl">
+                    <div class="hud-card">
+                        <span class="hud-label">Scenario</span>
+                        <strong id="hud-scenario">No scenario loaded</strong>
+                    </div>
+                    <div class="hud-card">
+                        <span class="hud-label">Phase</span>
+                        <strong id="hud-phase">Standby</strong>
+                    </div>
                 </div>
-                <div id="viz-container">
-                    <canvas id="topology-canvas"></canvas>
+                <div class="hud hud-tr">
+                    <div class="hud-card hud-legend">
+                        <span class="hud-label">Link Legend</span>
+                        <div class="legend-item"><span class="swatch swatch-scheduled"></span> Scheduled</div>
+                        <div class="legend-item"><span class="swatch swatch-wlan"></span> WLAN</div>
+                        <div class="legend-item"><span class="swatch swatch-motion"></span> Motion</div>
+                    </div>
                 </div>
+                <canvas id="main-canvas"></canvas>
             </div>
 
-            <div class="card history-card">
-                <div class="card-header">
-                    <h2>Mission History <small>Bundle Transit Log</small></h2>
-                </div>
-                <div class="history-table-wrapper">
-                    <table id="bundle-history">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Source</th>
-                                <th>Dest</th>
-                                <th>Size</th>
-                                <th>Status</th>
-                                <th>Modules</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body"></tbody>
-                    </table>
+            <!-- Timeline -->
+            <div id="timeline">
+                <button id="tl-play" class="tl-btn" title="Play/Pause">▶</button>
+                <span id="tl-elapsed" class="tl-time">T+0.0s</span>
+                <input type="range" id="tl-scrubber" min="0" max="100" value="0" step="0.1">
+                <span id="tl-total" class="tl-time">0s</span>
+                <div class="tl-speed">
+                    <button class="tl-speed-btn active" data-speed="1">1×</button>
+                    <button class="tl-speed-btn" data-speed="2">2×</button>
+                    <button class="tl-speed-btn" data-speed="4">4×</button>
                 </div>
             </div>
         </section>
 
-        <!-- Right Panel: Advanced Analytics -->
-        <aside class="analytics">
-            <div class="card chart-card">
-                <div class="card-header"><h2>Memory (SDR)</h2></div>
-                <div id="chart-sdr" class="d3-chart"></div>
-            </div>
-            
-            <div class="card chart-card">
-                <div class="card-header"><h2>Throughput <small>BPv7 Bps</small></h2></div>
-                <div id="chart-flow" class="d3-chart"></div>
-            </div>
+        <!-- ─── RIGHT TELEMETRY PANEL ─── -->
+        <aside id="telemetry-panel">
+            <div class="telemetry-scroll">
 
-            <div class="card log-card">
-                <div class="card-header"><h2>System Engine Log</h2></div>
-                <div id="event-log" class="console-log"></div>
+                <!-- Ops Snapshot -->
+                <div class="telem-card">
+                    <h3 class="telem-title">MISSION SNAPSHOT</h3>
+                    <div class="ops-grid">
+                        <div class="ops-cell"><span class="ops-label">Nodes</span><strong id="ops-node-count">0</strong></div>
+                        <div class="ops-cell"><span class="ops-label">Links</span><strong id="ops-link-count">0</strong></div>
+                        <div class="ops-cell"><span class="ops-label">Bundles</span><strong id="ops-bundle-count">0</strong></div>
+                        <div class="ops-cell"><span class="ops-label">Modules</span><strong id="ops-module-count">0</strong></div>
+                    </div>
+                </div>
+
+                <!-- Scenario Briefing -->
+                <div class="telem-card briefing-card" id="briefing-card" style="display:none">
+                    <h3 class="telem-title">📋 SCENARIO BRIEFING</h3>
+                    <div id="briefing-content" class="briefing-content"></div>
+                </div>
+
+                <!-- Scenario Intel -->
+                <div class="telem-card">
+                    <h3 class="telem-title">SCENARIO INTEL</h3>
+                    <div class="intel-grid">
+                        <div class="intel-row"><span>Next event</span><strong id="intel-next-event">—</strong></div>
+                        <div class="intel-row"><span>Tracked nodes</span><strong id="intel-tracked-nodes">0</strong></div>
+                        <div class="intel-row"><span>Moving nodes</span><strong id="intel-moving-count">0</strong></div>
+                        <div class="intel-row"><span>WLAN range</span><strong id="intel-wlan-range">0</strong></div>
+                        <div class="intel-row"><span>Active links</span><strong id="intel-link-count">0</strong></div>
+                        <div class="intel-row"><span>Scheduled</span><strong id="intel-sched-count">0</strong></div>
+                        <div class="intel-row"><span>WLAN</span><strong id="intel-wlan-count">0</strong></div>
+                    </div>
+                </div>
+
+                <!-- Module Insights -->
+                <div class="telem-card" id="module-insights-card" style="display:none">
+                    <h3 class="telem-title">⧫ MODULE INSIGHTS</h3>
+                    <div id="module-insights" class="module-insights"></div>
+                </div>
+
+                <!-- SDR Chart -->
+                <div class="telem-card">
+                    <h3 class="telem-title">SDR FOOTPRINT</h3>
+                    <div id="chart-sdr" class="chart-area"></div>
+                </div>
+
+                <!-- Throughput Chart -->
+                <div class="telem-card">
+                    <h3 class="telem-title">THROUGHPUT</h3>
+                    <div id="chart-flow" class="chart-area"></div>
+                </div>
+
+                <!-- Bundle History -->
+                <div class="telem-card">
+                    <h3 class="telem-title">BUNDLE HISTORY</h3>
+                    <div class="history-wrap">
+                        <table id="bundle-history">
+                            <thead><tr><th>Time</th><th>Src</th><th>Dst</th><th>Size</th><th>Status</th></tr></thead>
+                            <tbody id="history-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- System Log -->
+                <div class="telem-card telem-log">
+                    <h3 class="telem-title">SYSTEM LOG</h3>
+                    <div id="event-log" class="console-log"></div>
+                </div>
             </div>
         </aside>
+
     </div>
 
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=20"></script>
 </body>
 </html>

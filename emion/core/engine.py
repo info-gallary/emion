@@ -68,6 +68,22 @@ class EmionEngine:
                 print(f"      📥 Received {len(data)}B on {eid}")
             return data
 
+    def send_file(self, dst_node: int, source_path: str, dest_path: str = None):
+        """Send a file via CFDP (interstellar file delivery)."""
+        if not self.proxy:
+            self.attach()
+        
+        print(f"[EmION] CFDP: Sending {source_path} to N{dst_node}...")
+        cfdp_proxy = pyion.get_cfdp_proxy(self.node_id)
+        
+        # CFDP runs on top of a BP endpoint
+        eid = f"ipn:{self.node_id}.64" # Standard ION CFDP endpoint
+        with self.proxy.bp_open(eid) as ept:
+            with cfdp_proxy.cfdp_open(dst_node, ept) as entity:
+                entity.cfdp_send(source_path, dest_path or os.path.basename(source_path))
+                print(f"      📡 CFDP Put initiated: {source_path} → N{dst_node}")
+                return True
+
     def detach(self):
         """Detach from the ION proxy."""
         if self.proxy:

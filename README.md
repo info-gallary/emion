@@ -1,141 +1,150 @@
-# ⚛️ EmION — Professional ION-DTN Simulation
+# ⚛️ EmION — Research-Grade ION-DTN Simulation
 
-EmION is an authentic, production-ready Delay-Tolerant Networking (DTN) simulation framework. Unlike other simulators, EmION uses the **real ION-DTN C-engine** and **Contact Graph Routing (CGR)** for 100% protocol authenticity.
+**EmION** is an authentic, research-grade Delay-Tolerant Networking (DTN) simulation framework. Unlike other simulators, EmION uses the **real NASA-JPL ION-DTN C-engine** and **Contact Graph Routing (CGR)** for 100% protocol authenticity — with a state-of-the-art visual dashboard and per-node ML module attachment.
 
----
-
-## 🌍 1. Platform Compatibility
-
-EmION relies on the **NASA-JPL ION-DTN** C-engine. Choose your platform:
-
-| Platform | Support | Recommendation |
-| :--- | :--- | :--- |
-| **Linux (Ubuntu/Debian)** | ✅ Native | **Recommended**. Use the `install.sh` for one-click setup. |
-| **Windows (WSL2)** | ✅ Supported | **Best for Windows**. Install Ubuntu 22.04 on WSL2 and follow Linux steps. |
-| **Docker (Any OS)** | ✅ Containerized | **Easiest**. Run the pre-built environment with zero local setup. |
-| **Windows (Native)** | ❌ Not Supported | Use **WSL2** or **Docker**. ION-DTN requires a POSIX environment. |
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org)
 
 ---
 
-## 🚀 2. Installation
+## ✨ Key Features
 
-### Quick Start (PyPI)
-Install the framework and dashboard directly from PyPI:
+| Feature | Description |
+|---------|-------------|
+| **Real ION-DTN** | Uses the actual NASA-JPL ION C-engine — not a simulator |
+| **BPv7 + CGR** | Full Bundle Protocol v7 with Contact Graph Routing |
+| **WLAN Mobility** | Spatial distance-based wireless link management |
+| **XML Scenario Import** | Load CORE GUI `.xml` scenarios directly |
+| **Scenario Briefing** | Plain-English mission summary from any loaded scenario |
+| **Per-Node ML Modules** | Attach anomaly detectors, BPSec signers to specific nodes |
+| **Auto-Feed Pipeline** | Nodes automatically stream telemetry to attached modules |
+| **Visual Dashboard** | Real-time canvas with node LEDs, bundle animation, HUD overlays |
+| **CFDP Support** | Authentic file delivery over DTN |
+
+---
+
+## 🌍 Platform Support
+
+| Platform | Support | Notes |
+|----------|---------|-------|
+| **Linux (Ubuntu/Debian)** | ✅ Native | Recommended. Use `install.sh` |
+| **Windows (WSL2)** | ✅ Supported | Ubuntu 22.04 on WSL2 |
+| **Docker** | ✅ Containerized | Zero local setup |
+| **Windows (Native)** | ❌ | Use WSL2 or Docker |
+
+---
+
+## 🚀 Installation
+
+### From PyPI
 ```bash
 pip install "emion[dashboard]"
 ```
 
-### One-Click Installer (Linux/WSL)
-For a complete environment setup (including building ION-DTN and pyion from source):
+### From Source
 ```bash
 git clone https://github.com/info-gallary/emion.git
 cd emion
-chmod +x install.sh
-./install.sh
+pip install -e ".[dashboard]"
 ```
 
----
-
-## 🧪 3. Verification
-
-Ensure your environment is correctly configured by running the professional test suite. This verifies real-time bundle transit and CGR routing:
+### Full Environment (Linux/WSL)
 ```bash
-python3 tests/test_emion.py
+chmod +x install.sh && ./install.sh
 ```
 
 ---
 
-## 🛰️ 4. Usage
+## 🛰️ Usage
 
-### Launching Mission Control
-Start the visual dashboard to manage multi-node topologies and view live telemetry:
+### Launch the Dashboard
 ```bash
 emion dashboard
 ```
-- **URL**: `http://localhost:8420`
-- **Telemetry**: Real-time SDR memory and bundle tracking.
-- **Visuals**: Canvas-based topology with bundle animation.
+Open **http://localhost:8420** in your browser.
 
-### Command Line Interface
+### CLI
 ```bash
-emion info      # Check ION system status
-emion dashboard # Start visual UI
+emion info       # ION system status
+emion dashboard  # Start the visual dashboard
 ```
 
 ---
 
-## 🔌 5. Connecting Third-Party Modules (API)
+## 🧪 XML Scenario Import
 
-EmION supports selective attachment of Anomaly Detection or Security modules via a **FastAPI-based Plugin System**.
+Upload any CORE `.xml` scenario directly in the dashboard:
 
-### Step A: Implement your Plugin
-Your module must be a web service (FastAPI) with these endpoints:
-1. `GET /health` -> `{"status": "ok"}`
-2. `POST /analyze` -> Receives bundle `payload` and `metadata`, returns:
-   ```json
-   {
-     "is_anomaly": true,
-     "score": 0.95,
-     "label": "attack",
-     "details": {"reason": "Payload too large"}
-   }
-   ```
+1. Open **Scenario Engine** in the sidebar
+2. Drag-and-drop your `.xml` file (or click **Browse Files**)
+3. A **Scenario Briefing** appears in the telemetry panel with a plain-English summary
+4. Click **▶ Start** to begin the simulation
 
-### Step B: Connect to EmION
-In the Dashboard UI (or via API), connect your module:
-- **Module URL**: `http://localhost:8421`
-- **Target Nodes**: Selectively monitor specific nodes (e.g., `1,3`) or `all`.
-
-### Demo Reference
-See `anomaly_detector.py` for a functional sample implementation.
+See [`examples/ion_mars/`](examples/ion_mars/) for a sample scenario.
 
 ---
 
-### 🐳 One-Command Deployment (Docker)
+## 🔌 Per-Node ML Modules
 
-If you have Docker installed, you don't need to clone, install, or compile anything locally. The Docker image is **self-contained**, meaning it includes the NASA ION-DTN engine, all Python bindings, and the Mission Control Dashboard out-of-the-box.
+Attach ML inference modules (anomaly detectors, security analyzers) to **specific nodes**. The node automatically feeds all telemetry and bundle data to the attached module.
+
+### Quick Start
+1. Start your module (a FastAPI server with `/health` and `/analyze` endpoints)
+2. In the dashboard sidebar → **ML MODULES**
+3. Select a node → pick module type → enter the API URL → **Attach**
+4. Watch the canvas LED indicators (🟢/🟡/🔴) change in real-time
+
+### Module API Contract
+Your module must expose:
+- `GET /health` → `{"status": "ok"}`
+- `POST /analyze` → receives `{"payload": ..., "metadata": {...}}`, returns `{"is_anomaly": bool, "score": float}`
+
+See [`examples/anomaly_detector/`](examples/anomaly_detector/) for a reference implementation.
+
+---
+
+## 🐳 Docker
 
 ```bash
-# 1. Build the professional image (one-time setup)
 docker build -t emion .
-
-# 2. Launch the entire mission control
 docker run -p 8420:8420 emion
 ```
 
-**Pre-built Image (Zero-Cloning Workflow):**
-If you choose to push your image to a registry (like Docker Hub), then anyone can run it with just one command:
-`docker run -p 8420:8420 your-username/emion`
-This is the ultimate way to share your work—literally no setup required for the user.
-Access Mission Control at `http://localhost:8420`.
-
 ---
 
-## 📦 7. Package Management (Developers)
+## 📦 Project Structure
 
-### Build the Package
-```bash
-pip install build twine
-python3 -m build
+```
+emion/
+├── emion/                  # Core Python package
+│   ├── core/               # ION engine, scenarios, WLAN mobility
+│   ├── dashboard/          # FastAPI server + static UI
+│   ├── plugins/            # Module base classes (APIPlugin)
+│   └── pyion/              # C-extension bindings for ION
+├── examples/
+│   ├── ion_mars/           # CORE XML scenario (5 WLAN nodes)
+│   ├── anomaly_detector/   # Sample ML module
+│   └── core_services/      # CORE GUI integration scripts
+├── docs/                   # Coding guide & usage notebook
+├── tests/                  # Test suite
+├── Dockerfile              # Self-contained build
+├── pyproject.toml          # Package config (v0.4)
+├── LICENSE                 # MIT
+└── CONTRIBUTING.md         # How to contribute
 ```
 
-### Upload to PyPI
-```bash
-twine upload dist/*
-```
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 🏗️ Project Structure
-- `emion/` — Core BPv7 orchestration.
-- `docs/` — [Coding Guide](docs/coding_guide.md) & [Usage Notebook](docs/usage_demo.ipynb).
-- `ION-DTN/` — Authentic NASA-JPL C-Engine.
-- `Dockerfile` — Professional self-contained environment.
-- `README.md` — This guide.
+## 📜 License
+
+MIT License — see [LICENSE](LICENSE).
 
 ---
 
-**Authentic. Professional. Space-Ready.** ⚛️
-- ION-DTN (compiled, with ionadmin/bpadmin in PATH)
-- pyion (built against your ION installation)
-- FastAPI + uvicorn + websockets (for dashboard)
+**Built with the real NASA-JPL ION-DTN engine.** ⚛️

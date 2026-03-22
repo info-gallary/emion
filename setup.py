@@ -5,6 +5,7 @@ import os
 include_dirs = [
     os.path.join(os.path.dirname(__file__), "emion", "pyion"),
     "/usr/local/include",
+    "/usr/local/include/ion",
 ]
 
 ext_modules = [
@@ -48,7 +49,7 @@ ext_modules = [
 
 setup(
     name="emion",
-    version="0.2.3",
+    version="0.3.0",
     author="EmION Team",
     author_email="dev@info-gallary.com",
     packages=find_packages(),

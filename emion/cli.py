@@ -86,8 +86,24 @@ def _info():
 
 
 def _test():
-    from tests.test_emion import test_two_node_communication
-    ok = test_two_node_communication()
+    import os
+    import sys
+    cwd = os.getcwd()
+    if os.path.isdir(os.path.join(cwd, "tests")):
+        if cwd not in sys.path:
+            sys.path.insert(0, cwd)
+    else:
+        pkg_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if pkg_root not in sys.path:
+            sys.path.insert(0, pkg_root)
+            
+    try:
+        from tests.test_emion import test_full_suite
+    except ImportError:
+        print("❌ Cannot find 'tests' module. Are you running this from the EmION source directory?", file=sys.stderr)
+        sys.exit(1)
+        
+    ok = test_full_suite()
     sys.exit(0 if ok else 1)
 
 

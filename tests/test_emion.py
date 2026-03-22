@@ -65,15 +65,37 @@ def test_full_suite():
         print("[TEST] Waiting for ION to settle (15s)...")
         time.sleep(15)
 
-        print("[TEST] Attaching engines...")
+        import multiprocessing
+
+        def receiver_process(q):
+            try:
+                e2 = EmionEngine(2)
+                e2.attach()
+                data = e2.receive("ipn:2.1", timeout=15)
+                q.put(data)
+            except Exception as e:
+                q.put(None)
+
+        print("[TEST] Attaching engine 1...")
         engine1 = EmionEngine(1)
         engine1.attach()
-        engine2 = EmionEngine(2)
-        engine2.attach()
+
+        print("[TEST] Spawning engine 2 receiver process...")
+        q = multiprocessing.Queue()
+        p = multiprocessing.Process(target=receiver_process, args=(q,))
+        p.start()
+        
+        # Give receiver a second to attach and block on receive
+        time.sleep(2)
 
         payload = b"EMION_BASIC_VERIFICATION"
+        print("[TEST] Sending payload from Node 1...")
         engine1.send("ipn:1.1", "ipn:2.1", payload)
-        received = engine2.receive("ipn:2.1", timeout=15)
+        
+        p.join(timeout=16)
+        received = None
+        if not q.empty():
+            received = q.get()
 
         if not (received and payload in received):
             print("❌ Basic communication failed!")

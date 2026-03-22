@@ -14,6 +14,17 @@ RUN apt-get update && apt-get install -y \
     wget \
     cmake \
     libexpat1-dev \
+    autoconf \
+    automake \
+    libtool \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install native CORE-GUI (Common Open Research Emulator) and Networking Tools
+RUN apt-get update && apt-get install -y \
+    iproute2 ethtool tk python3-tk tcl net-tools tcpdump python3-venv \
+    && wget -q https://github.com/coreemu/core/releases/download/release-9.0.3/core_9.0.3_amd64.deb \
+    && apt-get install -y ./core_9.0.3_amd64.deb \
+    && rm core_9.0.3_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up build directories
@@ -22,7 +33,8 @@ WORKDIR /usr/src
 # 1. Build & Install ION-DTN (from local source)
 COPY ION-DTN ./ION-DTN
 WORKDIR /usr/src/ION-DTN
-RUN ./configure --enable-bpv7 && make -j$(nproc) && make install && ldconfig
+# Run autoreconf to handle any timestamp issues with Makefile.in/configure
+RUN autoreconf -fi && ./configure --enable-bpv7 && make -j$(nproc) && make install && ldconfig
 
 # 2. Install EmION (from local source)
 # This will automatically build the internal pyion C-bindings
