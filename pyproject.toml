@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emion"
-version = "0.4.0"
+version = "0.4.1"
 authors = [
   { name="Team DOMinators", email="dev@info-gallary.com" },
 ]
@@ -36,6 +36,10 @@ dashboard = [
     "uvicorn>=0.20.0",
     "websockets>=11.0",
     "python-multipart>=0.0.6",
+]
+test = [
+    "pytest>=7.0",
+    "httpx>=0.24.0",
 ]
 
 [project.scripts]

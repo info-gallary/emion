@@ -14,12 +14,17 @@ import sys
 import time
 import signal
 import subprocess
+from pathlib import Path
+import pytest
 
 # Ensure emion package is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from emion.core.node import EmionNode
 from emion.core.engine import EmionEngine
+
+
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 
 # Hard timeout so the script never hangs
@@ -38,7 +43,7 @@ def cleanup():
     time.sleep(2)
 
 
-def test_full_suite():
+def run_full_suite():
     """
     Consolidated Test Suite:
       1. Two-Node Basic Communication
@@ -107,7 +112,8 @@ def test_full_suite():
         
         # Start Dashboard and Sample Detector
         dash_proc = subprocess.Popen(["emion", "dashboard", "--port", "8420"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        det_proc = subprocess.Popen(["python3", "anomaly_detector.py", "--port", "8421"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        detector_script = Path(__file__).resolve().parents[1] / "examples" / "anomaly_detector" / "anomaly_detector.py"
+        det_proc = subprocess.Popen(["python3", str(detector_script), "--port", "8421"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(10) # Give more time for boot
 
         import requests
@@ -123,7 +129,7 @@ def test_full_suite():
         # We need to reuse them or clean them up.
         # Let's register the anomaly module first.
         print("[TEST] Attaching Anomaly Module...")
-        conn_resp = requests.post(f"{dash_url}/api/modules/connect?url={mod_url}&name=TestDetector")
+        conn_resp = requests.post(f"{dash_url}/api/nodes/1/modules?url={mod_url}&name=TestDetector")
         mod_json = conn_resp.json()
         print(f"       Connect response: {mod_json}")
         
@@ -142,7 +148,10 @@ def test_full_suite():
         result = resp.json()
         print(f"       Send result: {result}")
 
-        det_result = result.get("modules", {}).get(actual_name, {})
+        det_result = (
+            result.get("modules", {}).get(f"N1:{actual_name}")
+            or result.get("modules", {}).get(actual_name, {})
+        )
         if det_result.get("is_anomaly"):
             print("✅ Anomaly detection passed.")
         else:
@@ -164,6 +173,10 @@ def test_full_suite():
     finally:
         cleanup()
 
+
+def test_full_suite():
+    assert run_full_suite()
+
 if __name__ == "__main__":
-    success = test_full_suite()
+    success = run_full_suite()
     sys.exit(0 if success else 1)

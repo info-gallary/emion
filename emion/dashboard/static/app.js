@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════
    EmION Dashboard — Research Suite Controller
-   v0.4 · ION-DTN Simulation · Per-Node ML Modules
+   v0.4.1 · ION-DTN Simulation · Per-Node ML Modules
    ═══════════════════════════════════════════════════ */
 
 const API = '';
@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Scenario
     document.getElementById('btn-sim-start').addEventListener('click', startScenario);
     document.getElementById('btn-sim-stop').addEventListener('click', stopScenario);
-    document.getElementById('scenario-preset').addEventListener('change', loadScenario);
 
     // CFDP
     document.getElementById('btn-cfdp-send').addEventListener('click', sendCFDP);
@@ -70,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initCharts();
     connectWS();
     refresh();
-    fetchScenarios();
     setInterval(refresh, 5000);
     requestAnimationFrame(draw);
 });
@@ -98,10 +96,18 @@ async function uploadXML(file) {
         const res = await fetch('/api/scenario/upload-xml', { method: 'POST', body: form });
         const data = await res.json();
         if (data.error) { log('err', data.error); return; }
-        log('sys', `Parsed ${data.name}: ${data.events} events`);
+        log('sys', `Parsed ${data.name}: ${data.node_id_count || data.node_count} nodes, ${data.link_count} links`);
         if (data.briefing) displayBriefing(data.briefing);
-        fetchScenarios();
-    } catch (e) { log('err', `Upload failed: ${e.message}`); }
+        
+        // Direct instantiation from upload result
+        if (data.scenario) {
+            await loadScenario(data.scenario, true);
+        }
+    } catch (e) { log('err', `Upload failed: ${e.message}`); console.error(e); }
+    finally {
+        const input = document.getElementById('xml-file-input');
+        if (input) input.value = '';
+    }
 }
 
 // ── Briefing Display ────────────────────────────
@@ -119,6 +125,12 @@ function displayBriefing(briefing) {
         if (isMovement) cls += ' movement';
         return `<div class="${cls}">${line}</div>`;
     }).join('');
+
+    // Update HUD scenario info
+    const hudScen = document.getElementById('hud-scenario');
+    const hudPhase = document.getElementById('hud-phase');
+    if (hudScen) hudScen.innerText = briefing.name || 'Scenario Loaded';
+    if (hudPhase) hudPhase.innerText = 'Standby';
 }
 
 // ── Per-Node Module Management ──────────────────
@@ -150,10 +162,11 @@ async function refreshModules() {
     list.innerHTML = mods.map(m => {
         const st = moduleStatus[m.node_id]?.[m.name] || {};
         const dotCls = st.status === 'anomaly' ? 'anomaly' : st.status === 'error' ? 'error' : 'normal';
+        const encodedName = encodeURIComponent(m.name);
         return `<div class="mod-attach-item">
             <span class="mod-attach-dot ${dotCls}"></span>
             <span class="mod-attach-name">N${m.node_id}: ${m.name}</span>
-            <button class="mod-attach-del" onclick="detachModule(${m.node_id}, '${m.name}')">×</button>
+            <button class="mod-attach-del" onclick="detachModule(${m.node_id}, decodeURIComponent('${encodedName}'))">×</button>
         </div>`;
     }).join('');
 
@@ -277,6 +290,9 @@ function onEvent(evt) {
             }
         }
         addToHistory({ time: now, src: evt.src, dst: evt.dst, size: evt.size, status });
+        if (evt.route_plan?.selected_path?.length) {
+            log('sys', `Path forecast [${evt.route_plan.processing_mode}]: ${evt.route_plan.selected_path.join(' → ')}`);
+        }
         updateFlowChart(evt.size);
     } else if (evt.type === 'telemetry_update') {
         updateCharts(evt.data);
@@ -300,6 +316,9 @@ function onEvent(evt) {
     } else if (evt.type === 'scenario_loaded') {
         log('sys', `Scenario loaded: ${evt.count} events`);
         if (evt.briefing) displayBriefing(evt.briefing);
+        if (evt.scenario_links) linkList = evt.scenario_links;
+        if (evt.node_positions) targetPositions = evt.node_positions;
+        if (evt.scenario_telemetry) updateScenarioTelemetry(evt.scenario_telemetry);
     } else if (evt.type === 'module_attached') {
         log('mod', `Module ${evt.name} attached to N${evt.node_id}`); refreshModules();
     } else if (evt.type === 'module_detached') {
@@ -307,22 +326,6 @@ function onEvent(evt) {
     } else if (evt.type === 'log') {
         log(evt.tag, evt.msg);
     }
-}
-
-// ── Scenario Presets ────────────────────────────
-
-let SCENARIOS = {};
-async function fetchScenarios() {
-    const list = await api('GET', '/api/scenario/list');
-    const sel = document.getElementById('scenario-preset');
-    sel.innerHTML = '<option value="">— Load Scenario —</option>';
-    list.forEach(s => {
-        SCENARIOS[s.id] = s;
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = s.name;
-        sel.appendChild(opt);
-    });
 }
 
 // ── API ─────────────────────────────────────────
@@ -363,41 +366,120 @@ async function sendBundle() {
 async function startScenario() { await api('POST', '/api/scenario/start'); }
 async function stopScenario() { await api('POST', '/api/scenario/stop'); }
 
-async function loadScenario() {
-    const key = document.getElementById('scenario-preset').value;
-    if (!key) return;
-    const scenario = SCENARIOS[key];
-    const res = await fetch('/api/scenario/load', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(scenario)
-    });
-    const data = await res.json();
-    if (data.briefing) displayBriefing(data.briefing);
-    log('sys', `Loaded: ${scenario.name || key}`);
+async function loadScenario(scenario, skipBriefing = false) {
+    if (!scenario) {
+        log('err', 'Invalid scenario data');
+        return;
+    }
 
-    // Auto-register nodes from scenario
-    const nodes = new Set();
-    const events = scenario.events || [];
-    if (Array.isArray(events)) {
-        events.forEach(e => {
-            if (!e.action) return;
-            if (e.action.includes('contact')) {
-                const offset = e.args.length === 8 ? 1 : 0;
-                nodes.add(e.args[offset]); nodes.add(e.args[offset + 1]);
-            } else if (e.action.includes('range')) { nodes.add(e.args[0]); nodes.add(e.args[1]); }
-            else if (e.action === 'set_position' || e.action === 'move_linear') { nodes.add(e.args[0]); }
+    try {
+        log('sys', `Preparing network for: ${scenario.name || 'Ad-hoc'}...`);
+        log('sys', 'Resetting previous network state...');
+        await api('POST', '/api/reset');
+        nodeList = [];
+        linkList = [];
+        targetPositions = {};
+        currentPositions = {};
+        scenarioTelemetry = null;
+        simActive = false;
+
+        const res = await fetch('/api/scenario/load', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(scenario)
+        });
+        const data = await res.json();
+        if (!skipBriefing && data.briefing) displayBriefing(data.briefing);
+        log('sys', `Loaded: ${scenario.name || 'Scenario'}`);
+
+        // Extract nodes from position events or WLAN list
+        const nodes = new Set();
+        const events = scenario.events || [];
+        if (Array.isArray(events)) {
+            events.forEach(e => {
+                if (!e.action) return;
+                if (e.action.includes('contact')) {
+                    const offset = e.args.length >= 8 ? 1 : 0;
+                    if (e.args[offset] !== undefined) nodes.add(e.args[offset]);
+                    if (e.args[offset + 1] !== undefined) nodes.add(e.args[offset + 1]);
+                } else if (e.action.includes('range')) {
+                    if (e.args[0] !== undefined) nodes.add(e.args[0]);
+                    if (e.args[1] !== undefined) nodes.add(e.args[1]);
+                } else if (e.action === 'set_position' || e.action === 'move_linear') {
+                    if (e.args[0] !== undefined) nodes.add(e.args[0]);
+                }
+            });
+        }
+        if (scenario.wlan_nodes) scenario.wlan_nodes.forEach(n => nodes.add(n));
+        
+        if (nodes.size === 0) {
+            log('sys', 'Scenario has no nodes to instantiate.');
+        } else {
+            log('sys', `Instantiating ${nodes.size} nodes...`);
+        }
+
+        for (let id of nodes) {
+            log('sys', `Bootstrapping Node ${id}...`);
+            await api('POST', `/api/nodes?node_id=${id}`);
+        }
+        
+        await refresh();
+        applyScenarioPreview(scenario, data);
+        log('sys', `Scenario ready with ${nodeList.length} nodes.`);
+
+        if (nodes.size >= 2) {
+            log('sys', 'Initializing ION core for uploaded topology...');
+            await startNetwork();
+        } else if (nodes.size === 1) {
+            log('sys', 'Single-node topology loaded on canvas. Core start skipped because at least 2 nodes are required.');
+        }
+
+        resize();
+    } catch (e) {
+        log('err', `Load error: ${e.message}`);
+        console.error(e);
+    }
+}
+
+function applyScenarioPreview(scenario, responseData = {}) {
+    const previewPositions = {};
+    const previewLinks = new Map();
+
+    if (responseData.node_positions) {
+        Object.entries(responseData.node_positions).forEach(([nodeId, pos]) => {
+            if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
+                previewPositions[nodeId] = { x: Number(pos.x), y: Number(pos.y) };
+            }
         });
     }
-    if (scenario.wlan_nodes) scenario.wlan_nodes.forEach(n => nodes.add(n));
-    let needsStart = false;
-    for (let id of nodes) {
-        if (!nodeList.find(n => n.node_id === id)) {
-            await api('POST', `/api/nodes?node_id=${id}`);
-            needsStart = true;
+
+    (scenario.events || []).forEach(evt => {
+        if (evt.action === 'set_position' && evt.args.length >= 3) {
+            previewPositions[evt.args[0]] = { x: Number(evt.args[1]), y: Number(evt.args[2]) };
         }
+        if (evt.action === 'move_linear' && evt.args.length >= 3 && !previewPositions[evt.args[0]]) {
+            previewPositions[evt.args[0]] = { x: Number(evt.args[1]), y: Number(evt.args[2]) };
+        }
+        if (evt.action === 'add_contact' && evt.args.length >= 2 && Number(evt.time || 0) <= 0) {
+            const offset = evt.args.length >= 8 ? 1 : 0;
+            const from = Number(evt.args[offset]);
+            const to = Number(evt.args[offset + 1]);
+            if (Number.isFinite(from) && Number.isFinite(to)) {
+                const key = [from, to].sort((a, b) => a - b).join(':');
+                previewLinks.set(key, { from: Math.min(from, to), to: Math.max(from, to), kind: 'scheduled' });
+            }
+        }
+    });
+
+    targetPositions = previewPositions;
+    if (responseData.scenario_links?.length) {
+        linkList = responseData.scenario_links;
+    } else {
+        linkList = Array.from(previewLinks.values());
     }
-    await refresh();
-    if (needsStart || !nodeList.some(n => n.is_running)) await startNetwork();
+
+    if (responseData.scenario_telemetry) {
+        updateScenarioTelemetry(responseData.scenario_telemetry);
+    }
 }
 
 async function sendCFDP() {
@@ -520,19 +602,29 @@ function draw() {
     const positions = {};
     const n = nodeList.length;
     const cx = W / 2, cy = H / 2, r = Math.min(cx, cy) * 0.6;
-    const simBounds = isSim ? getSimBounds() : null;
+    const hasScenario = (scenarioTelemetry && scenarioTelemetry.name && scenarioTelemetry.name !== "Unnamed Scenario") || Object.keys(targetPositions).length > 0;
+    const isSimMode = hasScenario || (scenarioTelemetry && scenarioTelemetry.is_running);
+    const bounds = isSimMode ? getSimBounds() : null;
+    
     nodeList.forEach((nd, i) => {
         let tx, ty;
-        if (isSim && targetPositions[nd.node_id]) {
-            const proj = projectPos(targetPositions[nd.node_id], simBounds, W, H);
-            tx = proj.x; ty = proj.y;
+        if (targetPositions[nd.node_id]) {
+            const proj = projectPos(targetPositions[nd.node_id], bounds, W, H);
+            if (!isNaN(proj.x) && !isNaN(proj.y)) {
+                tx = proj.x; ty = proj.y;
+            } else {
+                const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+                tx = cx + r * Math.cos(a); ty = cy + r * Math.sin(a);
+            }
         } else {
             const a = (i / n) * Math.PI * 2 - Math.PI / 2;
             tx = cx + r * Math.cos(a); ty = cy + r * Math.sin(a);
         }
-        if (!currentPositions[nd.node_id]) currentPositions[nd.node_id] = { x: tx, y: ty };
-        else {
-            const f = isSim ? 0.04 : 1.0;
+        
+        if (!currentPositions[nd.node_id] || isNaN(currentPositions[nd.node_id].x)) {
+            currentPositions[nd.node_id] = { x: tx, y: ty };
+        } else {
+            const f = isSimMode ? 0.08 : 1.0;
             currentPositions[nd.node_id].x += (tx - currentPositions[nd.node_id].x) * f;
             currentPositions[nd.node_id].y += (ty - currentPositions[nd.node_id].y) * f;
         }
@@ -540,11 +632,12 @@ function draw() {
     });
 
     // Movement vectors
-    if (isSim && scenarioTelemetry?.moving_nodes?.length) {
+    if (isSimMode && scenarioTelemetry?.moving_nodes?.length) {
         scenarioTelemetry.moving_nodes.forEach(item => {
             const from = positions[item.node_id];
             if (!from || !item.destination) return;
-            const target = projectPos(item.destination, simBounds, W, H);
+            const target = projectPos(item.destination, bounds, W, H);
+            if (isNaN(target.x) || isNaN(target.y)) return;
             ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(target.x, target.y);
             ctx.setLineDash([5, 6]); ctx.strokeStyle = 'rgba(241,196,15,0.45)'; ctx.lineWidth = 1.2; ctx.stroke();
             ctx.setLineDash([]);
@@ -577,7 +670,7 @@ function draw() {
     });
 
     // Nodes
-    const nodeR = isSim ? 16 : 20;
+    const nodeR = isSimMode ? 16 : 20;
     Object.values(positions).forEach(nd => {
         const isMoving = scenarioTelemetry?.moving_nodes?.some(m => m.node_id === nd.node_id);
         const nodeMods = moduleStatus[nd.node_id];
@@ -647,15 +740,35 @@ function getSimBounds() {
     const pos = Object.values(targetPositions);
     if (!pos.length) return { minX: 0, maxX: 1000, minY: 0, maxY: 750 };
     const xs = pos.map(p => p.x), ys = pos.map(p => p.y);
-    const margin = scenarioTelemetry?.wlan_range ? Math.max(40, scenarioTelemetry.wlan_range * 0.3) : 80;
-    return { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minY: Math.min(...ys) - margin, maxY: Math.max(...ys) + margin };
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    
+    // Calculate span and center
+    const spanX = Math.max(maxX - minX, 10);
+    const spanY = Math.max(maxY - minY, 10);
+    
+    // Add margin (30% of span)
+    const marginX = spanX * 0.3, marginY = spanY * 0.3;
+    return { 
+        minX: minX - marginX, maxX: maxX + marginX, 
+        minY: minY - marginY, maxY: maxY + marginY 
+    };
 }
 
 function projectPos(pos, bounds, W, H) {
-    const pad = 45;
-    const uW = Math.max(W - pad * 2, 1), uH = Math.max(H - pad * 2, 1);
+    const pad = 60; // Increased padding
+    const uW = Math.max(W - pad * 2, 100), uH = Math.max(H - pad * 2, 100);
     const sX = Math.max(bounds.maxX - bounds.minX, 1), sY = Math.max(bounds.maxY - bounds.minY, 1);
-    return { x: pad + ((pos.x - bounds.minX) / sX) * uW, y: pad + ((pos.y - bounds.minY) / sY) * uH };
+    
+    // Aspect ratio correction to keep nodes proportional
+    const scale = Math.min(uW / sX, uH / sY);
+    const offsetX = (W - (sX * scale)) / 2;
+    const offsetY = (H - (sY * scale)) / 2;
+    
+    return { 
+        x: offsetX + (pos.x - bounds.minX) * scale, 
+        y: offsetY + (pos.y - bounds.minY) * scale 
+    };
 }
 
 function drawGrid(ctx, W, H) {

@@ -50,6 +50,11 @@ cd emion
 pip install -e ".[dashboard]"
 ```
 
+### For Testing
+```bash
+pip install -e ".[dashboard,test]"
+```
+
 ### Full Environment (Linux/WSL)
 ```bash
 chmod +x install.sh && ./install.sh
@@ -71,6 +76,26 @@ emion info       # ION system status
 emion dashboard  # Start the visual dashboard
 ```
 
+### Run Tests
+```bash
+pytest -q
+```
+
+For a reviewer-friendly quick pass:
+
+```bash
+pytest -q tests/test_scenario_import.py tests/test_dashboard_scenarios.py
+```
+
+## 📖 Documentation
+
+- [Quickstart](docs/quickstart.md)
+- [Architecture Overview](docs/architecture.md)
+- [Dashboard API Reference](docs/api.md)
+- [Custom XML Scenario Format](docs/scenario_format.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Reproducibility Guide](docs/reproducibility.md)
+
 ---
 
 ## 🧪 XML Scenario Import
@@ -83,6 +108,14 @@ Upload any CORE `.xml` scenario directly in the dashboard:
 4. Click **▶ Start** to begin the simulation
 
 See [`examples/ion_mars/`](examples/ion_mars/) for a sample scenario.
+
+For a reproducibility-oriented validation workflow, see [docs/reproducibility.md](docs/reproducibility.md).
+
+---
+
+## 📚 Citation
+
+Citation metadata is available in [CITATION.cff](CITATION.cff).
 
 ---
 
@@ -153,4 +186,3 @@ MIT License — see [LICENSE](LICENSE).
 **Authentic. Professional. Space-Ready.** ⚛️
 
 Built by **Team DOMinators** using the real NASA-JPL ION-DTN engine.
-

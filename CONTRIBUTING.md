@@ -12,11 +12,15 @@ Thank you for your interest in contributing! EmION is an open-source ION-DTN res
    ```
 3. **Install** in development mode:
    ```bash
-   pip install -e ".[dashboard]"
+   pip install -e ".[dashboard,test]"
    ```
 4. **Verify** your setup:
    ```bash
-   python tests/test_emion.py
+   pytest -q tests/test_scenario_import.py tests/test_dashboard_scenarios.py
+   ```
+5. **Run** the full integration test when your environment includes ION-DTN:
+   ```bash
+   pytest -q tests/test_emion.py
    ```
 
 ## Making Changes
@@ -24,6 +28,9 @@ Thank you for your interest in contributing! EmION is an open-source ION-DTN res
 1. Create a feature branch: `git checkout -b feature/your-feature`
 2. Make your changes
 3. Test your changes
+   ```bash
+   pytest -q tests/test_scenario_import.py tests/test_dashboard_scenarios.py
+   ```
 4. Commit with a clear message: `git commit -m "feat: add CGR route visualization"`
 5. Push to your fork: `git push origin feature/your-feature`
 6. Open a **Pull Request**

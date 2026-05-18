@@ -10,7 +10,8 @@ import asyncio
 import subprocess
 import os
 from pathlib import Path
-from typing import Dict, List
+from tempfile import NamedTemporaryFile
+from typing import Any, Dict, List, Optional
 
 try:
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
@@ -24,7 +25,7 @@ except ImportError:
 from emion.core.node import EmionNode
 from emion.core.engine import EmionEngine
 from emion.core.scenarios import ScenarioManager
-from emion.core.mars_import import build_ion_mars_scenario
+from emion.core.mars_import import parse_core_xml_scenario
 from emion.plugins.base import APIPlugin
 
 
@@ -115,11 +116,107 @@ def generate_briefing(scenario: dict) -> dict:
     }
 
 
+def _normalize_result(result: Any) -> Dict[str, Any]:
+    if isinstance(result, dict):
+        normalized = dict(result)
+    else:
+        normalized = {"value": result}
+    normalized.setdefault("is_anomaly", False)
+    normalized.setdefault("score", 0.0)
+    return normalized
+
+
+def _extract_route_override(result: Dict[str, Any], from_node: int) -> Optional[Dict[str, Any]]:
+    candidate = None
+    for key in ("future_path", "recommended_path", "route", "path"):
+        if key in result:
+            candidate = result[key]
+            break
+
+    path_nodes = None
+    available_at = result.get("available_at")
+    reason = result.get("reason") or result.get("label") or "module_override"
+
+    if isinstance(candidate, list):
+        path_nodes = [int(node) for node in candidate]
+    elif isinstance(candidate, dict):
+        raw_path = candidate.get("path") or candidate.get("nodes")
+        if isinstance(raw_path, list):
+            path_nodes = [int(node) for node in raw_path]
+        available_at = candidate.get("available_at", available_at)
+        reason = candidate.get("reason", reason)
+
+    next_hop = result.get("next_hop")
+    if path_nodes is None and next_hop is not None:
+        path_nodes = [int(from_node), int(next_hop)]
+
+    if not path_nodes:
+        return None
+
+    return {
+        "predicted_path": path_nodes,
+        "available_at": round(float(available_at or 0.0), 2),
+        "reason": str(reason),
+    }
+
+
+def process_bundle_pipeline(from_node: int, to_node: int, payload: bytes) -> tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
+    """Process a bundle through attached node modules and compute route guidance."""
+    src = f"ipn:{from_node}.1"
+    dst = f"ipn:{to_node}.1"
+    route_forecast = scenario_mgr.get_future_path(from_node, to_node)
+    base_metadata = {
+        "src": src,
+        "dst": dst,
+        "from_node": from_node,
+        "to_node": to_node,
+        "payload_size": len(payload),
+        "scenario_status": scenario_mgr.get_status(),
+        "scenario_telemetry": scenario_mgr.get_telemetry(),
+        "route_forecast": route_forecast,
+    }
+
+    module_results: Dict[str, Dict[str, Any]] = {}
+    selected_route = None
+    selected_by = "scenario"
+
+    for nid in [from_node, to_node]:
+        for mod in node_modules.get(nid, []):
+            result = _normalize_result(
+                mod.analyze(
+                    payload,
+                    {
+                        **base_metadata,
+                        "processing_node": nid,
+                        "module_name": mod.name,
+                    },
+                )
+            )
+            key = f"N{nid}:{mod.name}"
+            module_results[key] = result
+            node_module_status.setdefault(nid, {})[mod.name] = result
+
+            override = _extract_route_override(result, from_node)
+            if override and selected_route is None:
+                selected_route = override
+                selected_by = key
+
+    route_plan = {
+        **route_forecast,
+        "selected_path": (selected_route or route_forecast).get("predicted_path", []),
+        "selected_by": selected_by,
+        "processing_mode": "module" if selected_route else "scenario",
+    }
+    if selected_route:
+        route_plan["module_override"] = selected_route
+    return module_results, route_plan
+
+
 def create_app() -> "FastAPI":
     if not FASTAPI_AVAILABLE:
         raise ImportError("pip install fastapi uvicorn websockets")
 
-    app = FastAPI(title="EmION Dashboard", version="0.3.0",
+    app = FastAPI(title="EmION Dashboard", version="0.4.1",
                   description="Real-time ION-DTN Visual Simulation")
     static = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static)), name="static")
@@ -137,9 +234,9 @@ def create_app() -> "FastAPI":
     scenario_dir.mkdir(parents=True, exist_ok=True)
     
     repo_root = Path(__file__).resolve().parents[2]
-    mars_xml_path = repo_root / "ion_mars" / "mars.xml"
+    mars_xml_path = repo_root / "examples" / "ion_mars" / "mars.xml"
     if mars_xml_path.exists():
-        ion_mars_scenario = build_ion_mars_scenario(mars_xml_path)
+        ion_mars_scenario = parse_core_xml_scenario(mars_xml_path)
         (scenario_dir / "ion_mars_original.json").write_text(
             json.dumps(ion_mars_scenario, indent=2)
         )
@@ -210,8 +307,23 @@ def create_app() -> "FastAPI":
         scenario_mgr.load_scenario(scenario)
         current_briefing = generate_briefing(scenario)
         events_len = len(scenario.get("events", []))
-        await broadcast({"type": "scenario_loaded", "count": events_len, "briefing": current_briefing})
-        return {"status": "loaded", "count": events_len, "briefing": current_briefing}
+        payload = {
+            "type": "scenario_loaded",
+            "count": events_len,
+            "briefing": current_briefing,
+            "scenario_links": scenario_mgr.get_active_links(),
+            "node_positions": scenario_mgr.node_positions,
+            "scenario_telemetry": scenario_mgr.get_telemetry(),
+        }
+        await broadcast(payload)
+        return {
+            "status": "loaded",
+            "count": events_len,
+            "briefing": current_briefing,
+            "scenario_links": scenario_mgr.get_active_links(),
+            "node_positions": scenario_mgr.node_positions,
+            "scenario_telemetry": scenario_mgr.get_telemetry(),
+        }
 
     @app.post("/api/scenario/start")
     async def start_scenario():
@@ -234,16 +346,33 @@ def create_app() -> "FastAPI":
     async def upload_xml(file: UploadFile = File(...)):
         """Accept a .xml CORE scenario file and parse it."""
         content = await file.read()
-        tmp = Path("/tmp") / file.filename
-        tmp.write_bytes(content)
+        safe_name = Path(file.filename or "scenario.xml").name
+        with NamedTemporaryFile(delete=False, suffix=Path(safe_name).suffix or ".xml") as tmp_file:
+            tmp_file.write(content)
+            tmp_path = Path(tmp_file.name)
         try:
-            scenario = build_ion_mars_scenario(tmp)
-            out_name = tmp.stem
+            scenario = parse_core_xml_scenario(tmp_path)
+            out_name = Path(safe_name).stem or tmp_path.stem
             (scenario_dir / f"{out_name}.json").write_text(json.dumps(scenario, indent=2))
             briefing = generate_briefing(scenario)
-            return {"status": "parsed", "name": scenario["name"], "events": len(scenario["events"]), "briefing": briefing}
+            return {
+                "status": "parsed", 
+                "id": out_name, 
+                "name": scenario["name"], 
+                "events": len(scenario["events"]), 
+                "node_count": len([e for e in scenario["events"] if e["action"] == "set_position"]),
+                "link_count": len([e for e in scenario["events"] if e["action"] == "add_contact"]) // 2,
+                "wlan_node_count": len(scenario.get("wlan_nodes", [])),
+                "briefing": briefing, 
+                "scenario": scenario
+            }
         except Exception as e:
             return {"error": str(e)}
+        finally:
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
     # ── Nodes (real ION-DTN) ──────────────────────────────────
 
@@ -302,6 +431,31 @@ def create_app() -> "FastAPI":
         await broadcast({"type": "network_stopped"})
         return {"status": "stopped"}
 
+    @app.post("/api/reset")
+    async def reset_all():
+        """Clear node, engine, scenario, and module state for a fresh topology load."""
+        await stop_all()
+        nodes.clear()
+        engines.clear()
+        node_modules.clear()
+        node_module_status.clear()
+        scenario_mgr.stop()
+        scenario_mgr.events = []
+        scenario_mgr.active_links.clear()
+        scenario_mgr.active_link_types.clear()
+        scenario_mgr.active_movements.clear()
+        scenario_mgr.node_positions = {}
+        scenario_mgr.current_time_relative = 0.0
+        scenario_mgr.scenario_name = "Unnamed Scenario"
+        scenario_mgr.wlan_nodes = []
+        scenario_mgr.wlan_range = 200.0
+        scenario_mgr.wlan_rate = 500000
+        scenario_mgr.wlan_owlt = 1
+        global current_briefing
+        current_briefing = {}
+        await broadcast({"type": "scenario_loaded", "count": 0, "briefing": current_briefing, "scenario_links": [], "node_positions": {}})
+        return {"status": "reset"}
+
     @app.get("/api/nodes")
     async def list_nodes():
         return [n.status() for n in nodes.values()]
@@ -310,7 +464,7 @@ def create_app() -> "FastAPI":
 
     @app.get("/api/links")
     async def list_links():
-        if scenario_mgr.is_running:
+        if scenario_mgr.is_running or scenario_mgr.active_links:
             return scenario_mgr.get_active_links()
             
         links = []
@@ -338,22 +492,11 @@ def create_app() -> "FastAPI":
         except Exception as e:
             return {"error": str(e)}
 
-        # Auto-feed to per-node modules — both source and destination modules
-        module_results = {}
-        bundle_meta = {"src": src, "dst": dst, "from_node": from_node, "to_node": to_node}
-        for nid in [from_node, to_node]:
-            for mod in node_modules.get(nid, []):
-                try:
-                    result = mod.analyze(data, bundle_meta)
-                    key = f"N{nid}:{mod.name}"
-                    module_results[key] = result
-                    node_module_status.setdefault(nid, {})[mod.name] = result
-                except Exception as e:
-                    module_results[f"N{nid}:{mod.name}"] = {"error": str(e)}
+        module_results, route_plan = process_bundle_pipeline(from_node, to_node, data)
 
         evt = {"type": "bundle_sent", "from": from_node, "to": to_node,
                "src": src, "dst": dst, "size": len(data), "ts": time.time(),
-               "modules": module_results}
+               "modules": module_results, "route_plan": route_plan}
         event_log.append(evt)
         await broadcast(evt)
         return evt
@@ -388,6 +531,16 @@ def create_app() -> "FastAPI":
             await broadcast({"type": "module_attached", "node_id": node_id, "name": mod.name, "module_type": module_type})
             return {"status": "ok", "node_id": node_id, "name": mod.name, "info": info}
         return {"error": f"Cannot reach {url}/health"}
+
+    @app.post("/api/modules/connect")
+    async def attach_module_legacy(url: str, name: str = "", module_type: str = "anomaly", node_id: Optional[int] = None):
+        """Backward-compatible alias for older clients and tests."""
+        target_node = node_id
+        if target_node is None:
+            if not nodes:
+                return {"error": "Register at least one node before attaching a module"}
+            target_node = sorted(nodes.keys())[0]
+        return await attach_module(target_node, url=url, name=name, module_type=module_type)
 
     @app.delete("/api/nodes/{node_id}/modules/{mod_name}")
     async def detach_module(node_id: int, mod_name: str):
@@ -434,9 +587,7 @@ async def telemetry_loop():
     """Background task to broadcast live telemetry and auto-feed modules."""
     while True:
         await asyncio.sleep(3)
-        if not ws_clients:
-            continue
-            
+
         telemetry_data = []
         for nid, n in nodes.items():
             if n.is_running:
@@ -466,7 +617,7 @@ async def telemetry_loop():
                     "score": score
                 }
 
-        if telemetry_data or scenario_mgr.is_running:
+        if ws_clients and (telemetry_data or scenario_mgr.is_running or scenario_mgr.events):
             await broadcast({
                 "type": "telemetry_update", 
                 "data": telemetry_data,

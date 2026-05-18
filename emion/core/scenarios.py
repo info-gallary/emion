@@ -8,7 +8,6 @@ import json
 import threading
 import math
 from typing import List, Dict, Any, Optional, Union
-from datetime import datetime, timedelta
 from emion.pyion import mgmt
 
 class ScenarioEvent:
@@ -35,6 +34,8 @@ class ScenarioManager:
         self.scenario_name = "Unnamed Scenario"
         self.wlan_nodes: List[int] = []
         self.wlan_range = 200.0
+        self.wlan_rate = 500000
+        self.wlan_owlt = 1
 
     def load_scenario(self, data: Union[List[Dict[str, Any]], Dict[str, Any]]):
         """Load scenario events and configuration from a structure."""
@@ -42,11 +43,14 @@ class ScenarioManager:
         self.active_links.clear()
         self.active_link_types.clear()
         self.active_movements.clear()
+        self.node_positions = {}
         self.current_time_relative = 0.0
         self.scenario_name = data.get("name", "Unnamed Scenario") if isinstance(data, dict) else "Ad-hoc Scenario"
         
         self.wlan_nodes = data.get("wlan_nodes", []) if isinstance(data, dict) else []
         self.wlan_range = data.get("wlan_range", 200.0) if isinstance(data, dict) else 200.0
+        self.wlan_rate = int(data.get("wlan_rate", 500000)) if isinstance(data, dict) else 500000
+        self.wlan_owlt = int(data.get("wlan_owlt", 1)) if isinstance(data, dict) else 1
         
         events_list = data.get("events", []) if isinstance(data, dict) else data
         for item in events_list:
@@ -58,13 +62,53 @@ class ScenarioManager:
             self.events.append(event)
         # Sort events by time
         self.events.sort(key=lambda x: x.timestamp)
-        print(f"[Scenario] Loaded {len(self.events)} events. WLAN Nodes: {self.wlan_nodes} (Range: {self.wlan_range})")
+        self._build_preview_state()
+        print(
+            f"[Scenario] Loaded {len(self.events)} events. "
+            f"WLAN Nodes: {self.wlan_nodes} (Range: {self.wlan_range}, Rate: {self.wlan_rate})"
+        )
+
+    def _build_preview_state(self):
+        """Seed canvas preview state from the scenario before the simulation starts."""
+        for event in self.events:
+            if event.action == "set_position" and len(event.args) >= 3:
+                node_id, x, y = event.args[:3]
+                self.node_positions[node_id] = {"x": x, "y": y}
+            elif event.action == "add_contact" and event.timestamp <= 0 and len(event.args) >= 2:
+                offset = 1 if len(event.args) >= 8 else 0
+                from_node = event.args[offset]
+                to_node = event.args[offset + 1]
+                link = tuple(sorted([from_node, to_node]))
+                self.active_links.add(link)
+                self.active_link_types[link] = "scheduled"
+            elif event.action == "move_linear" and len(event.args) >= 3 and event.args[0] not in self.node_positions:
+                node_id, from_x, from_y = event.args[:3]
+                self.node_positions[node_id] = {"x": from_x, "y": from_y}
+        self._update_preview_wlan_links()
+
+    def _update_preview_wlan_links(self):
+        """Compute initial WLAN visibility without dispatching ION commands."""
+        for i in range(len(self.wlan_nodes)):
+            for j in range(i + 1, len(self.wlan_nodes)):
+                n1 = self.wlan_nodes[i]
+                n2 = self.wlan_nodes[j]
+                if n1 not in self.node_positions or n2 not in self.node_positions:
+                    continue
+                p1 = self.node_positions[n1]
+                p2 = self.node_positions[n2]
+                if math.hypot(p1["x"] - p2["x"], p1["y"] - p2["y"]) <= self.wlan_range:
+                    link = tuple(sorted([n1, n2]))
+                    self.active_links.add(link)
+                    self.active_link_types[link] = "wlan"
 
     def start(self):
         """Start the simulation clock."""
         if self.is_running:
             return
         
+        self.active_links.clear()
+        self.active_link_types.clear()
+        self.active_movements.clear()
         self.is_running = True
         self.start_time = time.time()
         for e in self.events:
@@ -158,10 +202,10 @@ class ScenarioManager:
                     is_connected = link in self.active_links
                     
                     if dist <= self.wlan_range and not is_connected:
-                        self._dispatch_ionadmin(f"a contact +0 +3600 {n1} {n2} 500000\n")
-                        self._dispatch_ionadmin(f"a contact +0 +3600 {n2} {n1} 500000\n")
-                        self._dispatch_ionadmin(f"a range +0 +3600 {n1} {n2} 1\n")
-                        self._dispatch_ionadmin(f"a range +0 +3600 {n2} {n1} 1\n")
+                        self._dispatch_ionadmin(f"a contact +0 +3600 {n1} {n2} {self.wlan_rate}\n")
+                        self._dispatch_ionadmin(f"a contact +0 +3600 {n2} {n1} {self.wlan_rate}\n")
+                        self._dispatch_ionadmin(f"a range +0 +3600 {n1} {n2} {self.wlan_owlt}\n")
+                        self._dispatch_ionadmin(f"a range +0 +3600 {n2} {n1} {self.wlan_owlt}\n")
                         self.active_links.add(link)
                         self.active_link_types[link] = "wlan"
                         msg = f"WLAN_UP: d={dist:.1f} <= {self.wlan_range} ({n1} <-> {n2})"
@@ -181,6 +225,96 @@ class ScenarioManager:
 
     def set_nodes(self, node_dirs: List[str]):
         self.node_dirs = node_dirs
+
+    def _extract_contact_link(self, action: str, args: List[Any]) -> Optional[tuple]:
+        if action not in {"add_contact", "delete_contact"}:
+            return None
+        if action == "add_contact":
+            if len(args) >= 8:
+                from_node, to_node = args[1], args[2]
+            elif len(args) >= 2:
+                from_node, to_node = args[0], args[1]
+            else:
+                return None
+        else:
+            if len(args) >= 5:
+                from_node, to_node = args[1], args[2]
+            elif len(args) >= 2:
+                from_node, to_node = args[0], args[1]
+            else:
+                return None
+        return tuple(sorted((int(from_node), int(to_node))))
+
+    def _find_path(self, src_node: int, dst_node: int, links: set) -> List[int]:
+        if src_node == dst_node:
+            return [src_node]
+        graph: Dict[int, set] = {}
+        for left, right in links:
+            graph.setdefault(left, set()).add(right)
+            graph.setdefault(right, set()).add(left)
+
+        visited = {src_node}
+        queue: List[List[int]] = [[src_node]]
+        while queue:
+            path = queue.pop(0)
+            current = path[-1]
+            for neighbor in sorted(graph.get(current, ())):
+                if neighbor in visited:
+                    continue
+                next_path = path + [neighbor]
+                if neighbor == dst_node:
+                    return next_path
+                visited.add(neighbor)
+                queue.append(next_path)
+        return []
+
+    def get_future_path(self, src_node: int, dst_node: int, max_contact_events: int = 256) -> Dict[str, Any]:
+        """Forecast the soonest scenario path between two nodes."""
+        current_path = self._find_path(src_node, dst_node, set(self.active_links))
+        forecast = {
+            "source": src_node,
+            "target": dst_node,
+            "current_path": current_path,
+            "predicted_path": current_path[:],
+            "available_at": round(self.current_time_relative if current_path else 0.0, 2),
+            "reason": "active_links" if current_path else "no_active_path",
+            "considered_events": [],
+        }
+        if current_path:
+            return forecast
+
+        simulated_links = set(self.active_links)
+        considered = 0
+        baseline = self.current_time_relative if self.is_running else 0.0
+        for event in self.events:
+            if event.action not in {"add_contact", "delete_contact"}:
+                continue
+            if event.executed or event.timestamp < baseline:
+                continue
+            link = self._extract_contact_link(event.action, event.args)
+            if not link:
+                continue
+
+            considered += 1
+            forecast["considered_events"].append({
+                "time": round(event.timestamp, 2),
+                "action": event.action,
+                "link": [link[0], link[1]],
+            })
+            if event.action == "add_contact":
+                simulated_links.add(link)
+            else:
+                simulated_links.discard(link)
+
+            predicted = self._find_path(src_node, dst_node, simulated_links)
+            if predicted:
+                forecast["predicted_path"] = predicted
+                forecast["available_at"] = round(event.timestamp, 2)
+                forecast["reason"] = "future_scheduled_contact"
+                break
+            if considered >= max_contact_events:
+                break
+        return forecast
 
     def _execute_event(self, event: ScenarioEvent):
         """Dispatch event via ionadmin to all nodes."""
@@ -299,5 +433,7 @@ class ScenarioManager:
             "tracked_node_count": len(self.node_positions),
             "wlan_node_count": len(self.wlan_nodes),
             "wlan_range": self.wlan_range,
+            "wlan_rate": self.wlan_rate,
+            "wlan_owlt": self.wlan_owlt,
             "moving_nodes": moving_nodes,
         }

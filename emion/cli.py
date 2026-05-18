@@ -98,12 +98,12 @@ def _test():
             sys.path.insert(0, pkg_root)
             
     try:
-        from tests.test_emion import test_full_suite
+        from tests.test_emion import run_full_suite
     except ImportError:
         print("❌ Cannot find 'tests' module. Are you running this from the EmION source directory?", file=sys.stderr)
         sys.exit(1)
         
-    ok = test_full_suite()
+    ok = run_full_suite()
     sys.exit(0 if ok else 1)
 
 

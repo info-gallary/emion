@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<scenario>
+  <networks>
+    <network id="10" name="wlan10" icon="" canvas="1" type="WIRELESS_LAN">
+      <position x="400.0" y="50.0" lat="47.579" lon="-122.132" alt="2.0"/>
+    </network>
+  </networks>
+  <devices>
+    <device id="1" name="n1" icon="" canvas="1" type="router">
+      <position x="100.0" y="200.0" lat="47.5" lon="-122.1" alt="2.0"/>
+      <services>
+        <service name="IPForward"/>
+        <service name="OSPFv3MDR"/>
+        <service name="ION_MARS"/>
+        <service name="zebra"/>
+      </services>
+    </device>
+    <device id="2" name="n2" icon="" canvas="1" type="mdr">
+      <position x="250.0" y="200.0" lat="47.5" lon="-122.1" alt="2.0"/>
+      <services>
+        <service name="IPForward"/>
+        <service name="OSPFv3MDR"/>
+        <service name="ION_MARS"/>
+        <service name="zebra"/>
+      </services>
+    </device>
+    <device id="3" name="n3" icon="" canvas="1" type="mdr">
+      <position x="400.0" y="200.0" lat="47.5" lon="-122.1" alt="2.0"/>
+      <services>
+        <service name="IPForward"/>
+        <service name="OSPFv3MDR"/>
+        <service name="ION_MARS"/>
+        <service name="zebra"/>
+      </services>
+    </device>
+    <device id="4" name="n4" icon="" canvas="1" type="mdr">
+      <position x="550.0" y="200.0" lat="47.5" lon="-122.1" alt="2.0"/>
+      <services>
+        <service name="IPForward"/>
+        <service name="OSPFv3MDR"/>
+        <service name="ION_MARS"/>
+        <service name="zebra"/>
+      </services>
+    </device>
+    <device id="5" name="n5" icon="" canvas="1" type="mdr">
+      <position x="700.0" y="200.0" lat="47.5" lon="-122.1" alt="2.0"/>
+      <services>
+        <service name="IPForward"/>
+        <service name="OSPFv3MDR"/>
+        <service name="ION_MARS"/>
+        <service name="zebra"/>
+      </services>
+    </device>
+  </devices>
+  <links>
+    <link node1="1" node2="10"><iface1 id="0" name="eth0" mac="00:00:00:aa:00:01" ip4="10.0.0.1" ip4_mask="32" ip6="2001::1" ip6_mask="128"/></link>
+    <link node1="2" node2="10"><iface1 id="0" name="eth0" mac="00:00:00:aa:00:02" ip4="10.0.0.2" ip4_mask="32" ip6="2001::2" ip6_mask="128"/></link>
+    <link node1="3" node2="10"><iface1 id="0" name="eth0" mac="00:00:00:aa:00:03" ip4="10.0.0.3" ip4_mask="32" ip6="2001::3" ip6_mask="128"/></link>
+    <link node1="4" node2="10"><iface1 id="0" name="eth0" mac="00:00:00:aa:00:04" ip4="10.0.0.4" ip4_mask="32" ip6="2001::4" ip6_mask="128"/></link>
+    <link node1="5" node2="10"><iface1 id="0" name="eth0" mac="00:00:00:aa:00:05" ip4="10.0.0.5" ip4_mask="32" ip6="2001::5" ip6_mask="128"/></link>
+  </links>
+  <mobility_configurations>
+    <mobility_configuration node="10" model="basic_range">
+      <configuration name="range" value="180"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0.0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+  </mobility_configurations>
+  <session_origin lat="47.579" lon="-122.132" alt="2.0" scale="150.0"/>
+  <session_options>
+    <configuration name="link_enabled" value="1"/>
+  </session_options>
+  <session_metadata>
+    <configuration name="canvas" value="{&quot;gridlines&quot;: true, &quot;canvases&quot;: [{&quot;id&quot;: 1, &quot;dimensions&quot;: [1000, 750]}]}"/>
+  </session_metadata>
+</scenario>
