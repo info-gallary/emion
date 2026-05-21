@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use EmION in research, please cite this software using the metadata below."
 title: "EmION"
-version: "0.4.1"
+version: "1.0.0"
 type: software
 license: "MIT"
 repository-code: "https://github.com/info-gallary/emion"

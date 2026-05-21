@@ -1,0 +1,7 @@
+bundle_index,trace_id,from_node,to_node,payload_size,send_size,delivery_status,delivery_latency_ms,hop_count,queue_delay_ms,contact_duration_s,module_inference_latency_ms
+0,dashboard_latency_rate_high-b0000,1,5,256,305,received,50.903,1,0.0,3600.0,0.0
+1,dashboard_latency_rate_high-b0001,1,5,256,305,received,43.187,1,0.0,3600.0,0.0
+2,dashboard_latency_rate_high-b0002,1,5,256,305,received,69.126,1,0.0,3600.0,0.0
+3,dashboard_latency_rate_high-b0003,1,5,256,305,received,47.121,1,0.0,3600.0,0.0
+4,dashboard_latency_rate_high-b0004,1,5,256,305,received,41.142,1,0.0,3600.0,0.0
+5,dashboard_latency_rate_high-b0005,1,5,256,305,received,50.005,1,0.0,3600.0,0.0

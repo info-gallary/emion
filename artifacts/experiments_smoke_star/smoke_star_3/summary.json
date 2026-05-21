@@ -1,0 +1,17 @@
+{
+  "experiment": "smoke_star_3",
+  "topology": "star",
+  "node_count": 3,
+  "bundle_count": 2,
+  "bundle_size": 128,
+  "bundle_rate_per_s": 2.0,
+  "delivery_ratio": 1.0,
+  "avg_delivery_latency_ms": 44.3845,
+  "avg_contact_creation_latency_ms": 11.569,
+  "routing_overhead_commands": 24,
+  "avg_dashboard_latency_ms": 0.0,
+  "avg_cpu_percent": 0.033333,
+  "avg_rss_mb": 13.065592,
+  "throughput_bps": 631.22983,
+  "avg_module_inference_latency_ms": 0.0
+}

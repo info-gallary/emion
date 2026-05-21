@@ -1,0 +1,2 @@
+experiment,topology,node_count,bundle_count,bundle_size,bundle_rate_per_s,delivery_ratio,avg_delivery_latency_ms,avg_contact_creation_latency_ms,routing_overhead_commands,avg_dashboard_latency_ms,avg_cpu_percent,avg_rss_mb,throughput_bps,avg_module_inference_latency_ms
+smoke_line_3,line,3,2,128,2.0,0.0,0.0,14.659,24,0.0,0.020833,14.334852,0.0,0.0

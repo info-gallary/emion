@@ -1,0 +1,4 @@
+experiment,topology,node_count,bundle_count,bundle_size,bundle_rate_per_s,delivery_ratio,avg_delivery_latency_ms,avg_contact_creation_latency_ms,routing_overhead_commands,avg_dashboard_latency_ms,avg_cpu_percent,avg_rss_mb,throughput_bps,avg_module_inference_latency_ms
+ml_rate_low,star,5,4,256,0.6667,1.0,37.40575,14.245,80,0.0,0.055,12.661003,789.860776,10.665
+ml_rate_medium,star,5,4,256,1.3333,1.0,53.091,13.625,80,0.0,0.031111,12.625955,1103.099082,11.866
+ml_rate_high,star,5,4,256,4.0,1.0,41.5215,12.258,80,0.0,0.0,12.667676,1516.277106,24.936

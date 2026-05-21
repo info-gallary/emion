@@ -1,0 +1,37 @@
+{
+  "cases": [
+    {
+      "name": "ml_rate_low",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "attach_ml_module": true
+    },
+    {
+      "name": "ml_rate_medium",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.75,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "attach_ml_module": true
+    },
+    {
+      "name": "ml_rate_high",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.25,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "attach_ml_module": true
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+bundle_index,trace_id,from_node,to_node,payload_size,send_size,delivery_status,delivery_latency_ms,hop_count,queue_delay_ms,contact_duration_s,module_inference_latency_ms
+0,smoke_line_3-b0000,1,3,128,162,timeout,0.0,2,0.0,3600.0,0.0
+1,smoke_line_3-b0001,1,3,128,162,timeout,0.0,2,0.0,3600.0,0.0

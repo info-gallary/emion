@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "name": "mars_actual_schedule",
+      "topology": "star",
+      "node_count": 6,
+      "bundle_count": 2,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.0,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "scenario_source": "actual_ion_xml",
+      "scenario_path": "examples/ion_mars/mars.xml"
+    }
+  ]
+}

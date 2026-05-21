@@ -1,0 +1,254 @@
+{
+  "name": "ml_rate_low",
+  "topology": "star",
+  "node_count": 5,
+  "layout": "circle",
+  "runtime_actions": [],
+  "events": [
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        1,
+        2,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        2,
+        1,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        1,
+        3,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        3,
+        1,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        1,
+        4,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        4,
+        1,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        1,
+        5,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_contact",
+      "args": [
+        5,
+        1,
+        "+0",
+        "+3600",
+        500000,
+        1.0,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        1,
+        2,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        2,
+        1,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        1,
+        3,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        3,
+        1,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        1,
+        4,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        4,
+        1,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        1,
+        5,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "add_range",
+      "args": [
+        5,
+        1,
+        "+0",
+        "+3600",
+        1,
+        1
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "set_position",
+      "args": [
+        1,
+        730.0,
+        280.0
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "set_position",
+      "args": [
+        2,
+        536.525,
+        546.296
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "set_position",
+      "args": [
+        3,
+        223.475,
+        444.58
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "set_position",
+      "args": [
+        4,
+        223.475,
+        115.42
+      ]
+    },
+    {
+      "time": 0.0,
+      "action": "set_position",
+      "args": [
+        5,
+        536.525,
+        13.704
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "experiment": "ml_rate_medium",
+  "topology": "star",
+  "node_count": 5,
+  "bundle_count": 4,
+  "bundle_size": 256,
+  "bundle_rate_per_s": 1.3333,
+  "delivery_ratio": 1.0,
+  "avg_delivery_latency_ms": 53.091,
+  "avg_contact_creation_latency_ms": 13.625,
+  "routing_overhead_commands": 80,
+  "avg_dashboard_latency_ms": 0.0,
+  "avg_cpu_percent": 0.031111,
+  "avg_rss_mb": 12.625955,
+  "throughput_bps": 1103.099082,
+  "avg_module_inference_latency_ms": 11.866
+}

@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "8420"]
+    ports:
+      - "8420:8420"
+    volumes:
+      - ./artifacts:/usr/src/emion/artifacts
+
+  runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      - python3
+      - scripts/run_experiments.py
+      - --config
+      - examples/experiments/scalability_matrix.json
+      - --output-dir
+      - /usr/src/emion/artifacts/compose_matrix
+    volumes:
+      - ./artifacts:/usr/src/emion/artifacts
+    profiles:
+      - experiments

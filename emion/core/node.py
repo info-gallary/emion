@@ -8,6 +8,12 @@ import os
 import subprocess
 import time
 import shutil
+from pathlib import Path
+
+try:
+    import psutil
+except ImportError:  # pragma: no cover - optional dependency
+    psutil = None
 
 
 class EmionNode:
@@ -25,6 +31,11 @@ class EmionNode:
         self.ion_log = os.path.join(self.node_dir, "ion.log")
         self.is_running = False
         self._peers = []
+        self._last_resource_sample_ts = None
+
+    @property
+    def node_path(self) -> Path:
+        return Path(self.node_dir)
 
     def _setup_dir(self):
         """Create a clean working directory for this node."""
@@ -38,8 +49,9 @@ class EmionNode:
 
         # ionconfig — SDR and working-memory parameters
         with open(os.path.join(d, "node.ionconfig"), "w") as f:
+            wm_key = 65280 + int(self.node_id)
             f.write(
-                f"wmKey 65281\n"
+                f"wmKey {wm_key}\n"
                 f"wmSize 50000000\n"
                 f"wmAddress 0\n"
                 f"sdrName 'ion'\n"
@@ -112,7 +124,7 @@ class EmionNode:
         if peer_node_id not in self._peers:
             self._peers.append(peer_node_id)
 
-    def start(self, cleanup=True):
+    def start(self, cleanup=True, startup_wait: float = 6.0):
         """Boot the authentic ION C-engine daemons."""
         if cleanup:
             # Aggressive cleanup
@@ -139,8 +151,9 @@ class EmionNode:
             )
 
         # Wait for ION to stabilize
-        time.sleep(6)
+        time.sleep(max(startup_wait, 0.0))
         self.is_running = True
+        self._prime_resource_sampling()
         print(f"      ✅ Node {self.node_id} LIVE  (ipn:{self.node_id}, udp:{self.port})")
 
     def stop(self):
@@ -149,6 +162,86 @@ class EmionNode:
         subprocess.run(["ionstop"], cwd=self.node_dir, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         time.sleep(1)
         self.is_running = False
+
+    def _iter_node_processes(self):
+        if psutil is None:
+            return []
+
+        node_dir = str(self.node_path.resolve())
+        processes = []
+        for proc in psutil.process_iter(["pid", "name"]):
+            try:
+                if proc.cwd() == node_dir:
+                    processes.append(proc)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, FileNotFoundError):
+                continue
+        return processes
+
+    def _prime_resource_sampling(self):
+        if psutil is None:
+            return
+        for proc in self._iter_node_processes():
+            try:
+                proc.cpu_percent(interval=None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        self._last_resource_sample_ts = time.time()
+
+    def get_resource_usage(self) -> dict:
+        """Measure per-node resource usage from the real ION daemon set."""
+        if psutil is None or not self.is_running:
+            return {
+                "available": False,
+                "process_count": 0,
+                "cpu_percent": 0.0,
+                "rss_bytes": 0,
+                "vms_bytes": 0,
+                "sample_window_s": 0.0,
+                "processes": [],
+            }
+
+        now = time.time()
+        sample_window = 0.0 if self._last_resource_sample_ts is None else max(now - self._last_resource_sample_ts, 0.0)
+        processes = []
+        total_cpu = 0.0
+        total_rss = 0
+        total_vms = 0
+        for proc in self._iter_node_processes():
+            try:
+                mem = proc.memory_info()
+                cpu = proc.cpu_percent(interval=None)
+                processes.append({
+                    "pid": proc.pid,
+                    "name": proc.name(),
+                    "cpu_percent": round(cpu, 3),
+                    "rss_bytes": int(mem.rss),
+                    "vms_bytes": int(mem.vms),
+                })
+                total_cpu += cpu
+                total_rss += mem.rss
+                total_vms += mem.vms
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+        self._last_resource_sample_ts = now
+        return {
+            "available": True,
+            "process_count": len(processes),
+            "cpu_percent": round(total_cpu, 3),
+            "rss_bytes": int(total_rss),
+            "vms_bytes": int(total_vms),
+            "sample_window_s": round(sample_window, 3),
+            "processes": processes,
+        }
+
+    def get_ion_log_tail(self, max_lines: int = 20) -> list[str]:
+        path = Path(self.ion_log)
+        if not path.exists():
+            return []
+        try:
+            return path.read_text(errors="ignore").splitlines()[-max_lines:]
+        except OSError:
+            return []
 
     def get_system_telemetry(self) -> dict:
         """Get real-time ION system telemetry."""
@@ -166,7 +259,13 @@ class EmionNode:
             for line in res.stdout.splitlines():
                 if "wmKey" in line: sdr_info["wmKey"] = line.split()[-1]
                 if "wmSize" in line: sdr_info["wmSize"] = line.split()[-1]
-            return {"node_id": self.node_id, "sdr": sdr_info, "timestamp": time.time()}
+            return {
+                "node_id": self.node_id,
+                "sdr": sdr_info,
+                "resources": self.get_resource_usage(),
+                "ion_log_tail": self.get_ion_log_tail(),
+                "timestamp": time.time(),
+            }
         except Exception:
             return {}
 

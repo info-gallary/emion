@@ -1,0 +1,5 @@
+bundle_index,trace_id,from_node,to_node,payload_size,send_size,delivery_status,delivery_latency_ms,hop_count,queue_delay_ms,contact_duration_s,module_inference_latency_ms
+0,ml_rate_medium-b0000,1,5,256,292,received,32.178,1,0.0,3600.0,0.804
+1,ml_rate_medium-b0001,1,5,256,292,received,47.956,1,0.0,3600.0,0.397
+2,ml_rate_medium-b0002,1,5,256,292,received,84.338,1,0.0,3600.0,0.639
+3,ml_rate_medium-b0003,1,5,256,292,received,47.892,1,0.0,3600.0,1.28

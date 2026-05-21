@@ -36,6 +36,26 @@ class ScenarioManager:
         self.wlan_range = 200.0
         self.wlan_rate = 500000
         self.wlan_owlt = 1
+        self.command_metrics: Dict[str, Any] = {}
+        self._reset_metrics()
+
+    def _reset_metrics(self):
+        self.command_metrics = {
+            "commands_total": 0,
+            "ionadmin_dispatch_total": 0,
+            "event_exec_total": 0,
+            "contact_add_count": 0,
+            "contact_delete_count": 0,
+            "range_add_count": 0,
+            "range_delete_count": 0,
+            "dispatch_latency_ms": [],
+            "contact_creation_latency_ms": [],
+            "contact_deletion_latency_ms": [],
+            "range_creation_latency_ms": [],
+            "range_deletion_latency_ms": [],
+            "event_exec_latency_ms": [],
+            "event_history": [],
+        }
 
     def load_scenario(self, data: Union[List[Dict[str, Any]], Dict[str, Any]]):
         """Load scenario events and configuration from a structure."""
@@ -45,6 +65,7 @@ class ScenarioManager:
         self.active_movements.clear()
         self.node_positions = {}
         self.current_time_relative = 0.0
+        self._reset_metrics()
         self.scenario_name = data.get("name", "Unnamed Scenario") if isinstance(data, dict) else "Ad-hoc Scenario"
         
         self.wlan_nodes = data.get("wlan_nodes", []) if isinstance(data, dict) else []
@@ -169,12 +190,14 @@ class ScenarioManager:
     def _dispatch_ionadmin(self, cmd: str):
         """Helper to send a raw ionadmin command to all tracked node directories."""
         import os, subprocess
+        dispatches = []
         for ndir in getattr(self, "node_dirs", []):
             if os.path.exists(ndir):
                 env = os.environ.copy()
                 node_id = os.path.basename(ndir)
                 env["ION_NODE_NUMBER"] = node_id
                 env.pop("ION_NODE_LIST_DIR", None)
+                t0 = time.perf_counter()
                 subprocess.run(
                     ["ionadmin"], 
                     input=cmd, 
@@ -184,6 +207,13 @@ class ScenarioManager:
                     stdout=subprocess.DEVNULL, 
                     stderr=subprocess.DEVNULL
                 )
+                latency_ms = (time.perf_counter() - t0) * 1000.0
+                dispatches.append({"node_id": int(node_id), "latency_ms": latency_ms, "cmd": cmd.strip()})
+                self.command_metrics["ionadmin_dispatch_total"] += 1
+                self.command_metrics["dispatch_latency_ms"].append(latency_ms)
+        if dispatches:
+            self.command_metrics["commands_total"] += 1
+        return dispatches
 
     def _evaluate_spatial_links(self):
         """Native CORE-GUI Basic Range Mobility Check."""
@@ -322,8 +352,10 @@ class ScenarioManager:
         print(f"[Scenario] @ {event.timestamp:.2f}s: {msg_text}")
         if hasattr(self, 'log_callback') and self.log_callback:
             self.log_callback(msg_text, event.timestamp)
+        event_started = time.perf_counter()
         try:
             cmd = ""
+            latency_bucket = None
             if event.action == "add_contact":
                 # args: [from_node, to_node, tstart, tend, rate, confidence, announce]
                 # or    [region_nbr, from_node, to_node, tstart, tend, rate, confidence, announce]
@@ -335,6 +367,8 @@ class ScenarioManager:
                 link = tuple(sorted([from_node, to_node]))
                 self.active_links.add(link)
                 self.active_link_types[link] = "scheduled"
+                self.command_metrics["contact_add_count"] += 1
+                latency_bucket = "contact_creation_latency_ms"
             elif event.action == "delete_contact":
                 # args: [from_node, to_node, tstart, announce]
                 # or    [region_nbr, from_node, to_node, tstart, announce]
@@ -346,14 +380,20 @@ class ScenarioManager:
                 link = tuple(sorted([from_node, to_node]))
                 self.active_links.discard(link)
                 self.active_link_types.pop(link, None)
+                self.command_metrics["contact_delete_count"] += 1
+                latency_bucket = "contact_deletion_latency_ms"
             elif event.action == "add_range":
                 # args: [from_node, to_node, tstart, tend, owlt, announce]
                 from_node, to_node, tstart, tend, owlt, announce = event.args
                 cmd = f"a range {tstart} {tend} {from_node} {to_node} {owlt}\n"
+                self.command_metrics["range_add_count"] += 1
+                latency_bucket = "range_creation_latency_ms"
             elif event.action == "delete_range":
                 # args: [from_node, to_node, tstart, announce]
                 from_node, to_node, tstart, announce = event.args
                 cmd = f"d range {tstart} {from_node} {to_node}\n"
+                self.command_metrics["range_delete_count"] += 1
+                latency_bucket = "range_deletion_latency_ms"
             elif event.action == "set_position":
                 node_id, x, y = event.args
                 self.node_positions[node_id] = {"x": x, "y": y}
@@ -373,9 +413,50 @@ class ScenarioManager:
                 print(f"[Scenario] Warning: Unknown action {event.action}")
                 return
             if cmd:
-                self._dispatch_ionadmin(cmd)
+                dispatches = self._dispatch_ionadmin(cmd)
+                if latency_bucket:
+                    if dispatches:
+                        self.command_metrics[latency_bucket].append(
+                            sum(d["latency_ms"] for d in dispatches) / len(dispatches)
+                        )
         except Exception as e:
             print(f"[Scenario] Error executing {event.action}: {e}")
+        finally:
+            elapsed_ms = (time.perf_counter() - event_started) * 1000.0
+            self.command_metrics["event_exec_total"] += 1
+            self.command_metrics["event_exec_latency_ms"].append(elapsed_ms)
+            self.command_metrics["event_history"].append({
+                "time": round(event.timestamp, 3),
+                "action": event.action,
+                "elapsed_ms": round(elapsed_ms, 3),
+            })
+
+    def _summarize_latency(self, values: List[float]) -> Dict[str, float]:
+        if not values:
+            return {"count": 0, "avg_ms": 0.0, "max_ms": 0.0}
+        return {
+            "count": len(values),
+            "avg_ms": round(sum(values) / len(values), 3),
+            "max_ms": round(max(values), 3),
+        }
+
+    def get_metrics(self) -> Dict[str, Any]:
+        return {
+            "commands_total": self.command_metrics["commands_total"],
+            "ionadmin_dispatch_total": self.command_metrics["ionadmin_dispatch_total"],
+            "event_exec_total": self.command_metrics["event_exec_total"],
+            "contact_add_count": self.command_metrics["contact_add_count"],
+            "contact_delete_count": self.command_metrics["contact_delete_count"],
+            "range_add_count": self.command_metrics["range_add_count"],
+            "range_delete_count": self.command_metrics["range_delete_count"],
+            "dispatch_latency": self._summarize_latency(self.command_metrics["dispatch_latency_ms"]),
+            "contact_creation_latency": self._summarize_latency(self.command_metrics["contact_creation_latency_ms"]),
+            "contact_deletion_latency": self._summarize_latency(self.command_metrics["contact_deletion_latency_ms"]),
+            "range_creation_latency": self._summarize_latency(self.command_metrics["range_creation_latency_ms"]),
+            "range_deletion_latency": self._summarize_latency(self.command_metrics["range_deletion_latency_ms"]),
+            "event_exec_latency": self._summarize_latency(self.command_metrics["event_exec_latency_ms"]),
+            "event_history": list(self.command_metrics["event_history"][-100:]),
+        }
 
     def get_status(self) -> Dict[str, Any]:
         """Return the current progression of the simulation."""
@@ -436,4 +517,5 @@ class ScenarioManager:
             "wlan_rate": self.wlan_rate,
             "wlan_owlt": self.wlan_owlt,
             "moving_nodes": moving_nodes,
+            "metrics": self.get_metrics(),
         }

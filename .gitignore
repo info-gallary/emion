@@ -16,6 +16,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+paper/
 
 # Generated node data (ion_mars runtime)
 ion_mars/[0-9]*/
@@ -39,4 +40,5 @@ anomaly_detector.py
 build_mars.py
 run_ion_mars_core.sh
 core_custom_services/
-scripts/
+scripts/__pycache__/
+wheelhouse/

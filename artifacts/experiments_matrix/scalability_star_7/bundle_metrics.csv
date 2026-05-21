@@ -1,0 +1,4 @@
+bundle_index,trace_id,from_node,to_node,payload_size,send_size,delivery_status,delivery_latency_ms,hop_count,queue_delay_ms,contact_duration_s,module_inference_latency_ms
+0,scalability_star_7-b0000,1,7,256,296,received,55.891,1,0.0,3600.0,0.0
+1,scalability_star_7-b0001,1,7,256,296,received,56.531,1,0.0,3600.0,0.0
+2,scalability_star_7-b0002,1,7,256,296,received,48.306,1,0.0,3600.0,0.0

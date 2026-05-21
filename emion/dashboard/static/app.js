@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════
    EmION Dashboard — Research Suite Controller
-   v0.4.1 · ION-DTN Simulation · Per-Node ML Modules
+   v1.0.0 · ION-DTN Simulation · Per-Node ML Modules
    ═══════════════════════════════════════════════════ */
 
 const API = '';

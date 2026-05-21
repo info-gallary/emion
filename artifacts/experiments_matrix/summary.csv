@@ -1,0 +1,10 @@
+experiment,topology,node_count,bundle_count,bundle_size,bundle_rate_per_s,delivery_ratio,avg_delivery_latency_ms,avg_contact_creation_latency_ms,routing_overhead_commands,avg_dashboard_latency_ms,avg_cpu_percent,avg_rss_mb,throughput_bps,avg_module_inference_latency_ms
+scalability_star_3,star,3,3,256,2.0,1.0,43.803667,11.942,24,0.0,0.0,14.912435,1300.939267,0.0
+scalability_star_5,star,5,3,256,2.0,1.0,39.255,18.982,80,2.916667,0.022857,12.638058,1245.93533,0.0
+scalability_star_7,star,7,3,256,2.0,1.0,53.576,13.719,168,4.269333,0.02449,11.708307,1225.669072,0.0
+dashboard_latency_rate_low,star,5,6,256,0.6667,1.0,53.971833,12.309,80,3.353333,0.01,11.892627,793.366133,0.0
+dashboard_latency_rate_medium,star,5,6,256,1.3333,1.0,56.420667,13.442,80,1.487,0.015385,11.696935,1051.049555,0.0
+dashboard_latency_rate_high,star,5,6,256,4.0,1.0,50.247333,12.321,80,4.516,0.058182,11.493182,1543.543134,0.0
+throughput_size_128,star,5,4,128,2.0,1.0,56.3375,11.938,80,0.0,0.017778,11.280642,637.814647,0.0
+throughput_size_512,star,5,4,512,2.0,1.0,60.2115,12.355,80,0.0,0.053333,11.301823,2507.065924,0.0
+throughput_size_1024,star,5,4,1024,2.0,1.0,48.326,12.155,80,2.808333,0.0,12.680078,5185.029843,0.0

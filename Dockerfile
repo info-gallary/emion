@@ -41,7 +41,7 @@ RUN autoreconf -fi && ./configure --enable-bpv7 && make -j$(nproc) && make insta
 # against the ION-DTN headers/libs installed above.
 WORKDIR /usr/src/emion
 COPY . .
-RUN pip3 install ".[dashboard]"
+RUN pip3 install ".[dashboard,experiments,ml]"
 
 # Environment setup
 ENV ION_HOME=/usr/local

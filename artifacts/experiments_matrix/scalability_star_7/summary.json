@@ -1,0 +1,17 @@
+{
+  "experiment": "scalability_star_7",
+  "topology": "star",
+  "node_count": 7,
+  "bundle_count": 3,
+  "bundle_size": 256,
+  "bundle_rate_per_s": 2.0,
+  "delivery_ratio": 1.0,
+  "avg_delivery_latency_ms": 53.576,
+  "avg_contact_creation_latency_ms": 13.719,
+  "routing_overhead_commands": 168,
+  "avg_dashboard_latency_ms": 4.269333,
+  "avg_cpu_percent": 0.02449,
+  "avg_rss_mb": 11.708307,
+  "throughput_bps": 1225.669072,
+  "avg_module_inference_latency_ms": 0.0
+}

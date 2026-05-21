@@ -87,6 +87,15 @@ For a reviewer-friendly quick pass:
 pytest -q tests/test_scenario_import.py tests/test_dashboard_scenarios.py
 ```
 
+### Run Automated Experiments
+```bash
+python3 scripts/run_experiments.py \
+  --config examples/experiments/scalability_matrix.json \
+  --output-dir artifacts/experiments_matrix
+```
+
+This writes per-scenario CSVs plus aggregate SVG plots under `artifacts/experiments_matrix/`.
+
 ## 📖 Documentation
 
 - [Quickstart](docs/quickstart.md)
@@ -110,6 +119,13 @@ Upload any CORE `.xml` scenario directly in the dashboard:
 See [`examples/ion_mars/`](examples/ion_mars/) for a sample scenario.
 
 For a reproducibility-oriented validation workflow, see [docs/reproducibility.md](docs/reproducibility.md).
+
+Experiment configs are available in [`examples/experiments/`](examples/experiments/), including:
+
+- `scalability_matrix.json`
+- `robustness_matrix.json`
+- `ml_matrix.json`
+- `mars_actual_schedule.json`
 
 ---
 
@@ -145,6 +161,38 @@ docker build -t emion .
 docker run -p 8420:8420 emion
 ```
 
+For a containerized experiment run:
+
+```bash
+docker compose run --rm --profile experiments runner
+```
+
+---
+
+## 📦 Release
+
+Local one-command release flow:
+
+```bash
+PYPI_API_TOKEN=your_token_here \
+python3 scripts/release_pypi.py all 1.0.1 --token-env PYPI_API_TOKEN
+```
+
+Useful subcommands:
+
+```bash
+python3 scripts/release_pypi.py set-version 1.0.1
+python3 scripts/release_pypi.py build
+python3 scripts/release_pypi.py publish --token-env PYPI_API_TOKEN
+```
+
+GitHub Actions release flow:
+
+- bump the version in the repo
+- push a tag like `v1.0.1`
+- set the repository secret `PYPI_API_TOKEN`
+- the workflow at `.github/workflows/pypi-release.yml` builds and publishes the sdist and repaired Linux wheel
+
 ---
 
 ## 📦 Project Structure
@@ -164,7 +212,7 @@ emion/
 ├── docs/                   # Coding guide & usage notebook
 ├── tests/                  # Test suite
 ├── Dockerfile              # Self-contained build
-├── pyproject.toml          # Package config (v0.4)
+├── pyproject.toml          # Package config (v1.0)
 ├── LICENSE                 # MIT
 └── CONTRIBUTING.md         # How to contribute
 ```

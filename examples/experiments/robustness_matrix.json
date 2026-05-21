@@ -1,0 +1,48 @@
+{
+  "cases": [
+    {
+      "name": "robustness_contact_failure",
+      "topology": "line",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.0,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "disruption": "sudden_contact_failure"
+    },
+    {
+      "name": "robustness_intermittent",
+      "topology": "line",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.0,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "disruption": "intermittent_connectivity"
+    },
+    {
+      "name": "robustness_bandwidth_drop",
+      "topology": "line",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.0,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "disruption": "bandwidth_degradation"
+    },
+    {
+      "name": "robustness_node_crash",
+      "topology": "line",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.0,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end",
+      "disruption": "node_crash"
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "bundles": {
+    "sent": 2,
+    "received": 0,
+    "timeouts": 0,
+    "delivery_ratio": 0.0,
+    "bytes_sent": 324,
+    "bytes_received": 0,
+    "delivery_latency_ms": {
+      "count": 0,
+      "avg": 0.0,
+      "max": 0.0
+    }
+  },
+  "modules": {
+    "bundle_inference_latency_ms": {
+      "count": 0,
+      "avg": 0.0,
+      "max": 0.0
+    },
+    "telemetry_inference_latency_ms": {
+      "count": 0,
+      "avg": 0.0,
+      "max": 0.0
+    }
+  },
+  "dashboard": {
+    "telemetry_message_count": 0,
+    "telemetry_bytes": 0,
+    "broadcast_counts": {
+      "scenario_loaded": 2,
+      "network_started": 1,
+      "scenario_started": 1,
+      "log": 11,
+      "bundle_sent": 2
+    }
+  },
+  "routing": {
+    "avg_hops": {
+      "count": 2,
+      "avg": 1.0,
+      "max": 1
+    },
+    "control_plane": {
+      "commands_total": 8,
+      "ionadmin_dispatch_total": 24,
+      "event_exec_total": 11,
+      "contact_add_count": 4,
+      "contact_delete_count": 0,
+      "range_add_count": 4,
+      "range_delete_count": 0,
+      "dispatch_latency": {
+        "count": 24,
+        "avg_ms": 11.394,
+        "max_ms": 18.846
+      },
+      "contact_creation_latency": {
+        "count": 4,
+        "avg_ms": 11.569,
+        "max_ms": 12.871
+      },
+      "contact_deletion_latency": {
+        "count": 0,
+        "avg_ms": 0.0,
+        "max_ms": 0.0
+      },
+      "range_creation_latency": {
+        "count": 4,
+        "avg_ms": 11.219,
+        "max_ms": 12.5
+      },
+      "range_deletion_latency": {
+        "count": 0,
+        "avg_ms": 0.0,
+        "max_ms": 0.0
+      },
+      "event_exec_latency": {
+        "count": 11,
+        "avg_ms": 26.218,
+        "max_ms": 42.543
+      },
+      "event_history": [
+        {
+          "time": 0.0,
+          "action": "add_contact",
+          "elapsed_ms": 42.543
+        },
+        {
+          "time": 0.0,
+          "action": "add_contact",
+          "elapsed_ms": 32.15
+        },
+        {
+          "time": 0.0,
+          "action": "add_contact",
+          "elapsed_ms": 39.172
+        },
+        {
+          "time": 0.0,
+          "action": "add_contact",
+          "elapsed_ms": 36.888
+        },
+        {
+          "time": 0.0,
+          "action": "add_range",
+          "elapsed_ms": 32.714
+        },
+        {
+          "time": 0.0,
+          "action": "add_range",
+          "elapsed_ms": 36.092
+        },
+        {
+          "time": 0.0,
+          "action": "add_range",
+          "elapsed_ms": 30.739
+        },
+        {
+          "time": 0.0,
+          "action": "add_range",
+          "elapsed_ms": 38.092
+        },
+        {
+          "time": 0.0,
+          "action": "set_position",
+          "elapsed_ms": 0.007
+        },
+        {
+          "time": 0.0,
+          "action": "set_position",
+          "elapsed_ms": 0.002
+        },
+        {
+          "time": 0.0,
+          "action": "set_position",
+          "elapsed_ms": 0.002
+        }
+      ]
+    }
+  },
+  "resources": {
+    "active_bundles": 2.0
+  },
+  "feature_samples": [
+    {
+      "bundle_size": 162,
+      "inter_arrival_time_ms": 0.0,
+      "hop_count": 1,
+      "ttl_seconds": 300,
+      "queue_delay_ms": 0.0,
+      "retransmission_count": 0,
+      "contact_duration_s": 3600.0,
+      "route_length": 2
+    },
+    {
+      "bundle_size": 162,
+      "inter_arrival_time_ms": 1690.754,
+      "hop_count": 1,
+      "ttl_seconds": 300,
+      "queue_delay_ms": 0.0,
+      "retransmission_count": 0,
+      "contact_duration_s": 3600.0,
+      "route_length": 2
+    }
+  ]
+}

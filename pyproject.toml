@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emion"
-version = "0.4.1"
+version = "1.0.0"
 authors = [
   { name="Team DOMinators", email="dev@info-gallary.com" },
 ]
@@ -41,12 +41,21 @@ test = [
     "pytest>=7.0",
     "httpx>=0.24.0",
 ]
+experiments = [
+    "requests>=2.31.0",
+    "websockets>=11.0",
+    "psutil>=5.9.0",
+]
+ml = [
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+]
 
 [project.scripts]
 emion = "emion.cli:main"
 
 [tool.setuptools]
-packages = ["emion", "emion.core", "emion.dashboard", "emion.plugins", "emion.pyion"]
+packages = ["emion", "emion.core", "emion.dashboard", "emion.plugins", "emion.pyion", "emion.experiments"]
 
 [tool.setuptools.package-data]
 emion = ["dashboard/static/*"]

@@ -1,0 +1,94 @@
+{
+  "cases": [
+    {
+      "name": "scalability_star_3",
+      "topology": "star",
+      "node_count": 3,
+      "bundle_count": 3,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "scalability_star_5",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 3,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "scalability_star_7",
+      "topology": "star",
+      "node_count": 7,
+      "bundle_count": 3,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "dashboard_latency_rate_low",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 6,
+      "bundle_size": 256,
+      "bundle_interval_s": 1.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "dashboard_latency_rate_medium",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 6,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.75,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "dashboard_latency_rate_high",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 6,
+      "bundle_size": 256,
+      "bundle_interval_s": 0.25,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "throughput_size_128",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 128,
+      "bundle_interval_s": 0.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "throughput_size_512",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 512,
+      "bundle_interval_s": 0.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    },
+    {
+      "name": "throughput_size_1024",
+      "topology": "star",
+      "node_count": 5,
+      "bundle_count": 4,
+      "bundle_size": 1024,
+      "bundle_interval_s": 0.5,
+      "startup_wait_s": 6.0,
+      "traffic_mode": "end_to_end"
+    }
+  ]
+}

@@ -49,7 +49,7 @@ ext_modules = [
 
 setup(
     name="emion",
-    version="0.4.1",
+    version="1.0.0",
     author="EmION Team",
     author_email="dev@info-gallary.com",
     packages=find_packages(),
@@ -67,5 +67,7 @@ setup(
     extras_require={
         "dashboard": ["fastapi", "uvicorn", "websockets", "python-multipart"],
         "test": ["pytest>=7.0", "httpx>=0.24.0"],
+        "experiments": ["requests>=2.31.0", "websockets>=11.0", "psutil>=5.9.0"],
+        "ml": ["numpy>=1.24.0", "scikit-learn>=1.3.0"],
     },
 )

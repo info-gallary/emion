@@ -3,7 +3,7 @@ EmION — Authentic ION-DTN Framework.
 All operations use real ION C-engine + pyion. No dummies.
 """
 
-__version__ = "0.4.1"
+__version__ = "1.0.0"
 __author__ = "EmION Team"
 
 from .core.node import EmionNode

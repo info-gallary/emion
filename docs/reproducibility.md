@@ -8,6 +8,7 @@ EmION has two useful validation layers:
 
 1. Fast software checks for scenario parsing, dashboard upload/load behavior, and route forecasting.
 2. Full integration checks that boot real ION-DTN components and exercise bundle delivery.
+3. Automated experiment batches that export CSV and SVG artifacts.
 
 ## Prerequisites
 
@@ -19,6 +20,12 @@ For the dashboard and test extras:
 
 ```bash
 pip install -e ".[dashboard,test]"
+```
+
+For experiment automation and the ML detector:
+
+```bash
+pip install -e ".[dashboard,test,experiments,ml]"
 ```
 
 ## Fast Validation
@@ -51,6 +58,44 @@ What this covers:
 - Bundle delivery between real nodes
 - Dashboard startup
 - Example anomaly detector integration
+
+## Automated Experiment Matrix
+
+Run the supplied experiment matrix:
+
+```bash
+python3 scripts/run_experiments.py \
+  --config examples/experiments/scalability_matrix.json \
+  --output-dir artifacts/experiments_matrix
+```
+
+Additional configs:
+
+- `examples/experiments/ml_matrix.json`
+- `examples/experiments/robustness_matrix.json`
+- `examples/experiments/mars_actual_schedule.json`
+
+Exported artifacts:
+
+- `summary.csv`
+- per-case `bundle_metrics.csv`
+- per-case `resource_metrics.csv`
+- per-case `telemetry_metrics.csv`
+- SVG plots for delivery ratio, CPU, memory, dashboard latency, throughput, and inference latency
+
+## Containerized Reproduction
+
+Start the dashboard:
+
+```bash
+docker compose up dashboard
+```
+
+Run the sample experiment batch in a container:
+
+```bash
+docker compose run --rm --profile experiments runner
+```
 
 ## Custom XML Scenario Smoke Test
 

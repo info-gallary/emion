@@ -4,9 +4,11 @@ EmION CLI — all operations use real ION-DTN.
     emion dashboard     Launch the web dashboard
     emion info          Show ION-DTN status
     emion test          Run the 2-node communication test
+    emion experiment    Run the automated experiment matrix
 """
 
 import sys
+import os
 import argparse
 
 
@@ -23,6 +25,9 @@ def main():
 
     sub.add_parser("info", help="Show ION-DTN status")
     sub.add_parser("test", help="Run 2-node comm test")
+    experiment = sub.add_parser("experiment", help="Run automated experiment matrix")
+    experiment.add_argument("--config", default="", help="Path to a JSON experiment config")
+    experiment.add_argument("--output-dir", default="artifacts/experiments")
 
     args = parser.parse_args()
 
@@ -33,6 +38,8 @@ def main():
         _info()
     elif args.cmd == "test":
         _test()
+    elif args.cmd == "experiment":
+        _experiment(args.config, args.output_dir)
     else:
         parser.print_help()
 
@@ -105,6 +112,17 @@ def _test():
         
     ok = run_full_suite()
     sys.exit(0 if ok else 1)
+
+
+def _experiment(config: str, output_dir: str):
+    from emion.experiments.runner import run_matrix
+
+    summary_csv = run_matrix(
+        config_path=config or None,
+        output_dir=output_dir,
+        repo_root=os.getcwd(),
+    )
+    print(summary_csv)
 
 
 if __name__ == "__main__":
