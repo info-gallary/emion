@@ -1,0 +1,13 @@
+experiment,topology,disruption,node_count,bundle_count,bundle_size,bundle_rate_per_s,delivery_ratio,avg_delivery_latency_ms,avg_contact_creation_latency_ms,routing_overhead_commands,avg_dashboard_latency_ms,avg_cpu_percent,avg_rss_mb,throughput_bps,avg_module_inference_latency_ms,pre_disruption_delivery_ratio,post_disruption_delivery_ratio,delivery_degradation,rerouting_delay_ms,recovery_time_s
+dashboard_latency_rate_high,star,none,5,3,256,4.0,1.0,63.06,5.542,80,2.925,0.0225,11.068457,1537.401852,0.0,1.0,0.0,1.0,0.0,0.0
+dashboard_latency_rate_low,star,none,5,3,256,0.6667,1.0,61.353333,6.438,80,0.0,0.014545,11.539062,793.214507,0.0,1.0,0.0,1.0,0.0,0.0
+dashboard_latency_rate_medium,star,none,5,3,256,1.3333,1.0,42.850333,6.425,80,1.466333,0.0,11.408281,1127.574534,0.0,1.0,0.0,1.0,0.0,0.0
+scalability_leo_geo_12,leo_geo,none,12,2,256,2.0,1.0,117.3275,8.227,960,0.0,0.0,10.776042,1202.073711,0.0,1.0,0.0,1.0,0.0,0.0
+scalability_leo_geo_16,leo_geo,none,16,2,256,2.0,1.0,117.9345,7.373,1018,0.0,0.015,8.35835,1163.402491,0.0,1.0,0.0,1.0,0.0,0.0
+scalability_leo_geo_20,leo_geo,none,20,2,256,2.0,1.0,145.1425,7.569,995,0.0,0.021667,10.196354,1090.220438,0.0,1.0,0.0,1.0,0.0,0.0
+scalability_star_3,star,none,3,2,256,2.0,1.0,42.366,7.211,24,0.0,0.0375,13.075195,1314.66202,0.0,1.0,0.0,1.0,0.0,0.0
+scalability_star_5,star,none,5,2,256,2.0,1.0,43.915,6.712,80,1.766,0.0,12.668973,1310.961244,0.0,1.0,0.0,1.0,0.0,0.0
+scalability_star_7,star,none,7,2,256,2.0,1.0,32.415,5.852,168,2.195,0.0,10.002312,1322.181048,0.0,1.0,0.0,1.0,0.0,0.0
+throughput_size_1024,star,none,5,2,1024,2.0,1.0,63.338,5.421,80,1.254667,0.0,10.846987,5160.260789,0.0,1.0,0.0,1.0,0.0,0.0
+throughput_size_128,star,none,5,2,128,2.0,1.0,46.513,5.646,80,1.35,0.0,11.051367,626.013971,0.0,1.0,0.0,1.0,0.0,0.0
+throughput_size_512,star,none,5,2,512,2.0,1.0,40.572,5.938,80,2.382333,0.0225,11.045801,2539.49164,0.0,1.0,0.0,1.0,0.0,0.0

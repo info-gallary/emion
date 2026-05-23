@@ -10,7 +10,7 @@ import os
 import subprocess
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -45,6 +45,7 @@ class ExperimentCase:
     scenario_source: str = "generated"
     scenario_path: str = ""
     telemetry_sample_s: float = 1.0
+    repeat_count: int = 1
 
 
 def _make_payload(size: int, *, index: int) -> str:
@@ -237,14 +238,43 @@ def _write_csv(path: Path, rows: List[dict]) -> None:
     if not rows:
         path.write_text("")
         return
+    fieldnames: List[str] = []
+    for row in rows:
+        for key in row.keys():
+            if key not in fieldnames:
+                fieldnames.append(key)
     with path.open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
 
 def _mean(values: List[float]) -> float:
     return round(sum(values) / len(values), 6) if values else 0.0
+
+
+def _stddev(values: List[float]) -> float:
+    if len(values) < 2:
+        return 0.0
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    return round(variance ** 0.5, 6)
+
+
+def _ci95(values: List[float]) -> float:
+    if len(values) < 2:
+        return 0.0
+    return round(1.96 * (_stddev(values) / (len(values) ** 0.5)), 6)
+
+
+def _disruption_timing(disruption: str) -> Tuple[float, Optional[float]]:
+    timings = {
+        "sudden_contact_failure": (10.0, None),
+        "intermittent_connectivity": (10.0, 20.0),
+        "bandwidth_degradation": (10.0, 11.0),
+        "node_crash": (10.0, 20.0),
+    }
+    return timings.get(disruption, (0.0, None))
 
 
 def _write_svg_line_chart(path: Path, *, title: str, x_label: str, y_label: str, rows: List[Tuple[float, float]]) -> None:
@@ -284,6 +314,52 @@ def _write_svg_line_chart(path: Path, *, title: str, x_label: str, y_label: str,
 <text x='18' y='{height / 2}' font-size='12' text-anchor='middle' transform='rotate(-90 18 {height / 2})' font-family='Arial'>{y_label}</text>
 </svg>"""
     path.write_text(svg)
+
+
+def _aggregate_replicates(summaries: List[dict]) -> List[dict]:
+    groups: Dict[str, List[dict]] = {}
+    for summary in summaries:
+        groups.setdefault(summary["experiment"], []).append(summary)
+
+    numeric_keys = [
+        "node_count",
+        "bundle_count",
+        "bundle_size",
+        "bundle_rate_per_s",
+        "delivery_ratio",
+        "avg_delivery_latency_ms",
+        "avg_contact_creation_latency_ms",
+        "routing_overhead_commands",
+        "avg_dashboard_latency_ms",
+        "avg_cpu_percent",
+        "avg_rss_mb",
+        "throughput_bps",
+        "avg_module_inference_latency_ms",
+        "pre_disruption_delivery_ratio",
+        "post_disruption_delivery_ratio",
+        "delivery_degradation",
+        "rerouting_delay_ms",
+        "recovery_time_s",
+    ]
+    aggregated = []
+    for experiment, rows in groups.items():
+        first = rows[0]
+        item = {
+            "experiment": experiment,
+            "topology": first.get("topology", ""),
+            "disruption": first.get("disruption", "none"),
+            "run_count": len(rows),
+        }
+        for key in numeric_keys:
+            values = [float(row[key]) for row in rows if key in row and row[key] != ""]
+            if not values:
+                continue
+            item[key] = _mean(values)
+            if len(rows) > 1 and key not in {"node_count", "bundle_count", "bundle_size", "bundle_rate_per_s"}:
+                item[f"{key}_std"] = _stddev(values)
+                item[f"{key}_ci95"] = _ci95(values)
+        aggregated.append(item)
+    return aggregated
 
 
 def _select_scenario(case: ExperimentCase) -> dict:
@@ -428,8 +504,11 @@ def run_case(case: ExperimentCase, *, repo_root: Path, output_root: Path) -> dic
         telemetry_listener.start()
         resource_sampler.start()
 
-        requests.post(f"{base_url}/api/start", params={"startup_wait": case.startup_wait_s}, timeout=120)
-        requests.post(f"{base_url}/api/scenario/start", timeout=15)
+        start_timeout_s = max(120, int(case.startup_wait_s * case.node_count * 3))
+        requests.post(f"{base_url}/api/start", params={"startup_wait": case.startup_wait_s}, timeout=start_timeout_s)
+        scenario_start_timeout_s = max(15, case.node_count * 3)
+        requests.post(f"{base_url}/api/scenario/start", timeout=scenario_start_timeout_s)
+        scenario_start_ts = time.time()
 
         runtime_actions = scenario.get("runtime_actions", [])
         if runtime_actions:
@@ -453,6 +532,7 @@ def run_case(case: ExperimentCase, *, repo_root: Path, output_root: Path) -> dic
                 timeout_s=case.receive_timeout_s,
             )
             time.sleep(1)
+            send_started_ts = time.time()
             send_resp = requests.post(
                 f"{base_url}/api/send",
                 params={
@@ -479,6 +559,7 @@ def run_case(case: ExperimentCase, *, repo_root: Path, output_root: Path) -> dic
                 "trace_id": trace_id,
                 "from_node": src_node,
                 "to_node": dst_node,
+                "send_elapsed_s": round(send_started_ts - scenario_start_ts, 3),
                 "payload_size": case.bundle_size,
                 "send_size": send_payload.get("size", 0),
                 "delivery_status": recv_payload.get("status", "error"),
@@ -522,6 +603,19 @@ def run_case(case: ExperimentCase, *, repo_root: Path, output_root: Path) -> dic
     telemetry_latency = [float(row["latency_ms"]) for row in telemetry_rows]
     delivered_rows = [row for row in bundle_rows if row.get("delivery_status") == "received"]
     delivery_latencies = [float(row["delivery_latency_ms"]) for row in delivered_rows if row.get("delivery_latency_ms")]
+    failure_time_s, recovery_marker_s = _disruption_timing(case.disruption)
+    pre_rows = [row for row in bundle_rows if float(row.get("send_elapsed_s", 0.0)) < failure_time_s] if case.disruption != "none" else bundle_rows
+    post_rows = [row for row in bundle_rows if float(row.get("send_elapsed_s", 0.0)) >= failure_time_s] if case.disruption != "none" else []
+    pre_delivered = [row for row in pre_rows if row.get("delivery_status") == "received"]
+    post_delivered = [row for row in post_rows if row.get("delivery_status") == "received"]
+    pre_latencies = [float(row["delivery_latency_ms"]) for row in pre_delivered if row.get("delivery_latency_ms")]
+    post_latencies = [float(row["delivery_latency_ms"]) for row in post_delivered if row.get("delivery_latency_ms")]
+    recovery_anchor_s = recovery_marker_s if recovery_marker_s is not None else failure_time_s
+    recovered_after_marker = [
+        float(row.get("send_elapsed_s", 0.0))
+        for row in post_delivered
+        if float(row.get("send_elapsed_s", 0.0)) >= recovery_anchor_s
+    ]
     throughput_bps = 0.0
     if traffic_end_ts > traffic_start_ts:
         throughput_bps = (
@@ -531,6 +625,7 @@ def run_case(case: ExperimentCase, *, repo_root: Path, output_root: Path) -> dic
     summary = {
         "experiment": case.name,
         "topology": case.topology,
+        "disruption": case.disruption,
         "node_count": case.node_count,
         "bundle_count": case.bundle_count,
         "bundle_size": case.bundle_size,
@@ -544,6 +639,15 @@ def run_case(case: ExperimentCase, *, repo_root: Path, output_root: Path) -> dic
         "avg_rss_mb": round((_mean(resource_rss) / (1024 * 1024)), 6) if resource_rss else 0.0,
         "throughput_bps": round(throughput_bps, 6),
         "avg_module_inference_latency_ms": metrics["modules"]["bundle_inference_latency_ms"]["avg"],
+        "pre_disruption_delivery_ratio": round(len(pre_delivered) / len(pre_rows), 4) if pre_rows else 0.0,
+        "post_disruption_delivery_ratio": round(len(post_delivered) / len(post_rows), 4) if post_rows else 0.0,
+        "delivery_degradation": round(
+            (len(pre_delivered) / len(pre_rows) if pre_rows else 0.0)
+            - (len(post_delivered) / len(post_rows) if post_rows else 0.0),
+            4,
+        ),
+        "rerouting_delay_ms": round(_mean(post_latencies) - _mean(pre_latencies), 6) if post_latencies and pre_latencies else 0.0,
+        "recovery_time_s": round(min(recovered_after_marker) - recovery_anchor_s, 6) if recovered_after_marker else 0.0,
     }
     (case_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     return summary
@@ -554,7 +658,20 @@ def run_matrix(*, config_path: Optional[str], output_dir: str, repo_root: str) -
     output_root = Path(output_dir).resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     cases = _load_cases(config_path)
-    summaries = [run_case(case, repo_root=repo, output_root=output_root) for case in cases]
+    run_summaries = []
+    for case in cases:
+        base_name = case.name
+        for run_id in range(1, max(case.repeat_count, 1) + 1):
+            run_case_name = f"{base_name}_run{run_id}" if case.repeat_count > 1 else base_name
+            run_case_item = replace(case, name=run_case_name, repeat_count=1)
+            summary = run_case(run_case_item, repo_root=repo, output_root=output_root)
+            summary["experiment"] = base_name
+            summary["run_id"] = run_id
+            run_summaries.append(summary)
+
+    summaries = _aggregate_replicates(run_summaries)
+    if any(item.get("run_count", 1) > 1 for item in summaries):
+        _write_csv(output_root / "replicate_summary.csv", run_summaries)
     summary_csv = output_root / "summary.csv"
     _write_csv(summary_csv, summaries)
 

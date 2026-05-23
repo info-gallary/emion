@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "name": "baseline_one_reference_10",
+      "topology": "ring",
+      "node_count": 10,
+      "bundle_count": 20,
+      "bundle_size": 1024,
+      "bundle_interval_s": 60.0,
+      "startup_wait_s": 6.0,
+      "receive_timeout_s": 90,
+      "traffic_mode": "ring_pairs",
+      "bandwidth_bps": 200000,
+      "owlt": 1,
+      "repeat_count": 5
+    },
+    {
+      "name": "baseline_one_reference_20",
+      "topology": "leo_geo",
+      "node_count": 20,
+      "bundle_count": 20,
+      "bundle_size": 1024,
+      "bundle_interval_s": 60.0,
+      "startup_wait_s": 6.0,
+      "receive_timeout_s": 90,
+      "traffic_mode": "ring_pairs",
+      "bandwidth_bps": 200000,
+      "owlt": 1,
+      "repeat_count": 5
+    }
+  ]
+}

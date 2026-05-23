@@ -74,14 +74,69 @@ Additional configs:
 - `examples/experiments/ml_matrix.json`
 - `examples/experiments/robustness_matrix.json`
 - `examples/experiments/mars_actual_schedule.json`
+- `examples/experiments/baseline_one_comparison.json`
 
 Exported artifacts:
 
 - `summary.csv`
+- `replicate_summary.csv` when any case uses `repeat_count > 1`
 - per-case `bundle_metrics.csv`
 - per-case `resource_metrics.csv`
 - per-case `telemetry_metrics.csv`
 - SVG plots for delivery ratio, CPU, memory, dashboard latency, throughput, and inference latency
+
+Each matrix case may set `repeat_count` to run independent repetitions. The
+top-level `summary.csv` then reports the mean value plus standard deviation and
+95% confidence interval columns for delivery ratio, CPU, RSS, dashboard latency,
+throughput, and disruption metrics. The raw per-run rows are preserved in
+`replicate_summary.csv`.
+
+## Reviewer-Oriented Experiment Batches
+
+The default scalability matrix now includes star topologies at 3, 5, and 7
+nodes plus a LEO/GEO-style constellation at 12, 16, and 20 nodes. The
+constellation generator places LEO nodes in an orbital ring and GEO relay nodes
+on an outer backbone with scheduled cross-links, so the 20-node case exercises a
+larger multi-hop contact plan than the original small star scenarios.
+
+For robustness, run:
+
+```bash
+python3 scripts/run_experiments.py \
+  --config examples/experiments/robustness_matrix.json \
+  --output-dir artifacts/experiments_robustness
+```
+
+The robustness summary includes quantitative columns for
+`pre_disruption_delivery_ratio`, `post_disruption_delivery_ratio`,
+`delivery_degradation`, `rerouting_delay_ms`, and `recovery_time_s` for:
+
+- node crash
+- sudden contact failure
+- intermittent connectivity
+- bandwidth degradation
+
+For a ONE-style baseline comparison, run:
+
+```bash
+python3 scripts/run_experiments.py \
+  --config examples/experiments/baseline_one_comparison.json \
+  --output-dir artifacts/experiments_baseline_one
+```
+
+This configuration mirrors common ONE benchmarking dimensions: delivery
+probability/ratio and latency are the primary routing metrics, and the reference
+ONE literature uses Bluetooth-like 0.2 Mbps links, 10-70 nodes, and message
+generation intervals of 1-3 minutes. Use the resulting EmION `delivery_ratio`,
+`avg_delivery_latency_ms`, `throughput_bps`, and `routing_overhead_commands`
+columns alongside the selected ONE paper values in the manuscript. Cite the ONE
+simulator paper for the simulator feature set and metrics, and the MDPI
+quantitative routing evaluation for the reference scenario dimensions:
+
+- Keranen, Ott, and Karkkainen, "The ONE Simulator for DTN Protocol Evaluation",
+  SIMUTools 2009.
+- Massri et al., "Routing Protocols for Delay Tolerant Networks: A Reference
+  Architecture and a Thorough Quantitative Evaluation", Computers 2016.
 
 ## Containerized Reproduction
 

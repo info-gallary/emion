@@ -32,6 +32,26 @@ def _grid_positions(node_count: int, cols: int = 4, spacing: float = 140.0) -> D
     return positions
 
 
+def _leo_geo_positions(node_count: int) -> Dict[int, Tuple[float, float]]:
+    """Place 16 LEO nodes in a ring and up to 4 GEO relay nodes outside it."""
+    if node_count < 8:
+        raise ValueError("leo_geo topology requires at least 8 nodes")
+
+    leo_count = min(node_count - 4, 16) if node_count >= 12 else node_count - 2
+    geo_count = node_count - leo_count
+    positions = {}
+    positions.update(_circle_positions(leo_count, radius=240.0, center_x=480.0, center_y=320.0))
+    geo_radius = 380.0
+    for idx in range(geo_count):
+        angle = ((idx + 0.5) / max(geo_count, 1)) * 2 * math.pi
+        node_id = leo_count + idx + 1
+        positions[node_id] = (
+            round(480.0 + geo_radius * math.cos(angle), 3),
+            round(320.0 + geo_radius * math.sin(angle), 3),
+        )
+    return positions
+
+
 def _edge_list(topology: str, node_count: int) -> List[Tuple[int, int]]:
     if topology == "line":
         return [(idx, idx + 1) for idx in range(1, node_count)]
@@ -44,6 +64,19 @@ def _edge_list(topology: str, node_count: int) -> List[Tuple[int, int]]:
         return [(1, idx) for idx in range(2, node_count + 1)]
     if topology == "mesh":
         return [(left, right) for left in range(1, node_count + 1) for right in range(left + 1, node_count + 1)]
+    if topology == "leo_geo":
+        if node_count < 8:
+            raise ValueError("leo_geo topology requires at least 8 nodes")
+        leo_count = min(node_count - 4, 16) if node_count >= 12 else node_count - 2
+        geo_nodes = list(range(leo_count + 1, node_count + 1))
+        edges = [(idx, idx + 1) for idx in range(1, leo_count)]
+        edges.append((leo_count, 1))
+        if len(geo_nodes) > 1:
+            edges.extend((geo_nodes[idx], geo_nodes[(idx + 1) % len(geo_nodes)]) for idx in range(len(geo_nodes)))
+        for idx in range(1, leo_count + 1):
+            geo = geo_nodes[(idx - 1) % len(geo_nodes)]
+            edges.append((idx, geo))
+        return edges
     raise ValueError(f"Unsupported topology: {topology}")
 
 
@@ -70,7 +103,9 @@ def _apply_disruption(events: List[dict], topology: str, node_count: int, disrup
     if disruption == "none":
         return runtime_actions
 
-    if topology == "star":
+    if topology == "ring":
+        critical_edge = (1, node_count)
+    elif topology == "star":
         critical_edge = (1, max(2, node_count // 2 + 1))
     else:
         critical_edge = (max(1, node_count // 2), max(2, node_count // 2 + 1))
@@ -117,7 +152,11 @@ def generate_scenario(
     if node_count < 2:
         raise ValueError("node_count must be at least 2")
 
-    positions = _circle_positions(node_count) if layout == "circle" else _grid_positions(node_count)
+    if topology == "leo_geo":
+        positions = _leo_geo_positions(node_count)
+        layout = "leo_geo"
+    else:
+        positions = _circle_positions(node_count) if layout == "circle" else _grid_positions(node_count)
     events: List[dict] = []
     for node_id, (x, y) in positions.items():
         events.append({"time": 0.0, "action": "set_position", "args": [node_id, x, y]})
